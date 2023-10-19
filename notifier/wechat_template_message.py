@@ -5,13 +5,15 @@ from config import wechat_secret
 import pickle
 import logging
 import os
+
+from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
 from notifier.BaseNotifier import Notifier
 
 logger = logging.getLogger(__name__)
 
 
 class WeChatTemplateMessage(Notifier):
-    name = "wechat_template_message"
+    name = "wechatTemplateMessage"
     token = None
     token_expiry_time = 0
     token_path = os.path.join(os.path.dirname(__file__), 'token/wechat_token')
@@ -150,12 +152,11 @@ class WeChatTemplateMessage(Notifier):
 
     def send_fault_notify(self, user_info: dict, message: dict):
         """发送故障通知"""
-        to_user = user_info.get('uuid')
+        to_user = user_info.get(self.name.lower())
         render_url = message.get('render_url', "www.baidu.com")  # 模版消息生效字段
         fault_time = message.get('fault_time')  # 模版消息生效字段
-        message_template = message.get('message_template')
         fault_location = message.get('location', "请检查配置文件中的location字段")  # 模版消息生效字段
-        remark = message_template.format(**message)
+        remark = DEVICE_FAULT_MESSAGE_TEMPLATE.format(**message)
         self.send_network_outage_notification(to_user, render_url, fault_location, fault_time, remark)
 
     def send_recovery_notify(self, user_info: dict, message: dict):

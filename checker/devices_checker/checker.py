@@ -7,7 +7,7 @@ import aiohttp
 import aioping
 import requests
 import time
-
+from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
@@ -68,6 +68,7 @@ class AsyncDeviceOnlineChecker:
                 self.kwargs["is_online"] = True
                 return self.kwargs
         self.kwargs["is_online"] = False
+        self.kwargs["fault_time"] = datetime.utcnow()
         return self.kwargs
 
 

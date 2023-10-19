@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Sequence, Enum, ForeignKey, Table, DateTime,Boolean
+from sqlalchemy import Column, Integer, String, Sequence, Enum, ForeignKey, Table, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from model.base import Base
 from datetime import datetime
-
 
 user_group_association = Table('user_group', Base.metadata,
                                Column('user_id', Integer, ForeignKey('users.id')),
@@ -69,9 +68,9 @@ class Failure_ticket(Base):
     fault_time = Column(DateTime, default=datetime.utcnow)
     recovery_time = Column(DateTime, nullable=True)
     # 处理人
-    handler_id = Column(Integer, ForeignKey('users.id'),nullable=True)
+    handler_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     handler = relationship('User', backref='failure_tickets')
-    description = Column(String(1000),nullable=True)
+    description = Column(String(1000), nullable=True)
 
 
 class UserNotifyFrequency(Base):

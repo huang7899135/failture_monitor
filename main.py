@@ -1,4 +1,4 @@
-from monitor.monitor import DevicesMonitor
+from monitor.device_monitor import DevicesMonitor
 from utils.logger import setup_logger
 import os
 

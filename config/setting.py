@@ -6,8 +6,8 @@ MONITOR_OBJECTS_DATA_SOURCE = "yaml"
 MONITOR_OBJECTS_DATA_YAML_PATH = "datasource/monitor_objects.yaml"
 
 # 通知起始时间段
-NOTICE_START_TIME = time(10, 0, 0)
-NOTICE_END_TIME = time(23, 0, 0)
+NOTICE_START_TIME = time(0, 0, 0)
+NOTICE_END_TIME = time(23, 59, 0)
 
 ###############数据库配置################
 DATABASE_CONFIG = {
