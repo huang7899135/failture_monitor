@@ -36,7 +36,7 @@ class BaseMonitor(object):
         """从配置文件或者数据库中获取通知整个接收人组的数据"""
         if MONITOR_OBJECTS_DATA_SOURCE == "yaml":
             project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            config_dir = os.path.join(project_path, "data_store/notification_recipient_group.yaml")
+            config_dir = os.path.join(project_path, "datasource/notification_recipient_group.yaml")
             with open(config_dir, "r", encoding='utf-8') as f:
                 return yaml.load(f, Loader=yaml.FullLoader)
         else:
@@ -102,10 +102,6 @@ class BaseMonitor(object):
 
     def is_fault_ticket_exist(self, msg: dict):
         """判断工单是否存在"""
-        raise NotImplementedError
-
-    def identify_message(self, msg: dict):
-        """消息识别,并决定到底是否生成工单,发送什么类型的通知"""
         raise NotImplementedError
 
     def identify_message_and_send_notice(self, msg):

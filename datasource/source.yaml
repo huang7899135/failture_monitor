@@ -1,0 +1,315 @@
+groups:
+  - name: '西胜'
+  - name: '浩亿'
+  - name: 'test'
+
+users:
+  - name: "黄成"
+    gender: "male"
+    groups:
+      - "西胜"
+      - "test"
+      - "浩亿"
+  - name: "曾威"
+    gender: "male"
+    groups:
+      - "西胜"
+      - "浩亿"
+  - name: "张耕"
+    gender: "male"
+    groups:
+      - "西胜"
+  - name: "李小菊"
+    gender: "female"
+    groups:
+      - "西胜"
+    
+user_notify_configurations:
+  - user: "黄成"
+    notify_method: "wechatTemplateMessage"
+    user_value: "ozoJjv3QyBLlDf-PzkxfrRA5aPHk"
+    is_enable: true
+  - user: "曾威"
+    notify_method: "wechatTemplateMessage"
+    user_value: "ozoJjv0GfZzr-LsLEg5Z95kHFE-s"
+    is_enable: true
+  - user: "张耕"
+    notify_method: "wechatTemplateMessage"
+    user_value: "ozoJjv67fYBqcLoQ_bOc6YOJ2Wa8"
+    is_enable: true
+  - user: "李小菊"
+    notify_method: "wechatTemplateMessage"
+    user_value: "ozoJjv7Ed3_mYxzieiks9HDTs4jU"
+    is_enable: true
+  - user: "黄成"
+    notify_method: "mail"
+    user_value: "455289180@qq.com"
+    is_enable: true
+      
+devices:
+  - device: '空港电源'
+    location: '成都空港集团机房'
+    device_type: "电源"
+    is_effective: False
+    address: "117.176.217.131"
+    port: "10171"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '智谷电源'
+    location: '成都智谷机房'
+    is_effective: true
+    device_type: "电源"
+    address: "183.222.16.253"
+    port: "8055"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '内网群辉'
+    location: 'home'
+    is_effective: true
+    device_type: "管理线路"
+    address: "192.168.1.100"
+    port: "5000"
+    check_method: "http"
+    notify_group: "test"
+
+  - device: '南河'
+    location: '广元利州南河1'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12221"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '南河2'
+    location: '广元利州南河2'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12201"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '摩配街'
+    location: '广元摩配街'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12201"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '新观'
+    location: '广元新观'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10218"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '榆林'
+    location: '广元旺苍榆林'
+    is_effective: true
+    device_type: "管理线路"
+    address: "223.87.57.178"
+    check_method: "icmp"
+    notify_group: "test"
+    max_retry: 20
+
+  - device: '白马路'
+    location: '广元摩配街'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12138"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '青川'
+    location: '广元青川双创中心'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12221"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '万圣家园'
+    location: '成都万圣家园'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10211"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '中梁瑞府'
+    location: '成都中粮瑞福'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10091"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '兴盛国际'
+    location: '成都兴盛国际'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10161"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '北斗产业园'
+    location: '成都天回镇北斗产业园'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "41055"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '成都北门'
+    location: '张叔'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "31202"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '德润园'
+    location: '成都德润园'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.175.166.36"
+    check_method: "icmp"
+    notify_group: "test"
+
+  - device: '新津'
+    location: '成都新津'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "19081"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '生命科技园'
+    location: '生命科技园'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12231"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '蒲阳'
+    location: '蒲阳街道'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10131"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '海思科'
+    location: '海思科广场'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12035"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '磨床厂'
+    location: '天回磨床厂'
+    is_effective: true
+    device_type: "管理线路"
+    address: "183.223.216.73"
+    check_method: "icmp"
+    notify_group: "test"
+
+  - device: '简阳2'
+    location: '简阳2农村坝坝头'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12121"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '金堂'
+    location: '金堂县钟楼'
+    is_effective: true
+    device_type: "管理线路"
+    address: "223.87.234.3"
+    check_method: "icmp"
+    notify_group: "test"
+
+  - device: '龙湖'
+    location: '龙湖地下室'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10121"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '乡城'
+    location: '甘孜乡城'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10011"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '德格'
+    location: '甘孜德格'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10191"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '新龙'
+    location: '甘孜新龙'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10231"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '新龙2'
+    location: '东娃楼上'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10111"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '泸定'
+    location: '甘孜泸定'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12041"
+    check_method: "tcp"
+    notify_group: "test"
+
+  - device: '甘孜县'
+    location: '甘孜州甘孜县甘孜街道'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "10041"
+    check_method: "tcp"
+    notify_group: "test"
