@@ -72,35 +72,73 @@ class BaseMonitor(object):
         except Exception as e:
             logger.warning(f"验证失败:{e},取消发送")
             return
-        # notify_group = msg.get('notify_group')
         recipients = self.get_notify_recipient(msg)
         if not recipients:
             logger.warning(f"没有找到对应的通知接收人,取消发送")
             return
-
+        # 消息发送器发送消息
         for sender in self.message_sender:
             # 为msg添加故障时间为当时的时间
             if not msg.get("fault_time"):
                 msg["fault_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             else:
+                # 如果msg中已经有fault_time,则将其转换为字符串,原本为datetime对象
                 msg["fault_time"] = msg.get("fault_time").strftime("%Y-%m-%d %H:%M:%S")
 
             for recipient in recipients:
+                # recipient的格式为:
+                # {   "user_id": 1,
+                #     "name": "张三",
+                #     <消息发送器的name>: <uuid>}
                 if recipient.get(sender.name.lower()):
-                    msg["username"] = recipient.get("name")
+                    msg["recipient"] = recipient
                     msg['render_url'] = self.generate_fault_url(msg)
-                    sender().send_fault_notify(user_info=recipient, message=msg)
+                    sender().send_fault_notify( message=msg)
 
     def generate_fault_url(self, msg: dict):
         """生成故障url"""
+        raise NotImplementedError
+
+    def generate_recovery_url(self, msg: dict):
+        """生成恢复url"""
         return "www.baidu.com"
 
-    def remove_fault_ticket_and_send_recover_notify(self, msg: dict):
+    def remove_fault_ticket(self, msg: dict, fault_tickets: list):
         """故障清除"""
         raise NotImplementedError
 
-    def is_fault_ticket_exist(self, msg: dict):
-        """判断工单是否存在"""
+    def send_recover_notify(self, msg: dict):
+        """发送恢复通知"""
+        try:
+            msg = self.validate(msg)
+        except Exception as e:
+            logger.warning(f"验证失败:{e},取消发送")
+            return
+        recipients = self.get_notify_recipient(msg)
+        if not recipients:
+            logger.warning(f"没有找到对应的通知接收人,取消发送")
+            return
+        # 消息发送器发送消息
+        for sender in self.message_sender:
+            # 为msg添加故障时间为当时的时间
+            if not msg.get("recovery_time"):
+                msg["recovery_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                # 如果msg中已经有recovery_time,则将其转换为字符串,原本为datetime对象
+                msg["recovery_time"] = msg.get("recovery_time").strftime("%Y-%m-%d %H:%M:%S")
+
+            for recipient in recipients:
+                # recipient的格式为:
+                # {   "user_id": 1,
+                #     "name": "张三",
+                #     <消息发送器的name>: <uuid>}
+                if recipient.get(sender.name.lower()):
+                    msg["recipient"] = recipient
+                    msg['render_url'] = self.generate_recovery_url(msg)
+                    sender().send_recovery_notify(message=msg)
+
+    def query_fault_ticket(self, msg: dict):
+        """判断工单是否存在,如果存在则给msg加上工单id"""
         raise NotImplementedError
 
     def identify_message_and_send_notice(self, msg):
@@ -117,12 +155,15 @@ class BaseMonitor(object):
                 如果不存在,pass
         """
         if not msg['is_online']:
-            if not self.is_fault_ticket_exist(msg):
+            if not self.query_fault_ticket(msg):
                 self.generate_fault_ticket(msg)
             self.send_fault_notify(msg)
         else:
-            if self.is_fault_ticket_exist(msg):
-                self.remove_fault_ticket_and_send_recover_notify(msg)
+            fault_tickets = self.query_fault_ticket(msg)
+            if fault_tickets:
+                msg["recovery_time"] = datetime.now()
+                self.remove_fault_ticket(msg, fault_tickets)
+                self.send_recover_notify(msg)
             else:
                 pass
 

@@ -6,7 +6,7 @@ import pickle
 import logging
 import os
 
-from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
+from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE
 from notifier.BaseNotifier import Notifier
 
 logger = logging.getLogger(__name__)
@@ -150,17 +150,28 @@ class WeChatTemplateMessage(Notifier):
         }
         return self.__send_messages(to_user, template_id, render_url, template_data)
 
-    def send_fault_notify(self, user_info: dict, message: dict):
+    def send_fault_notify(self,message: dict):
         """发送故障通知"""
-        to_user = user_info.get(self.name.lower())
+        to_user = message.get("recipient").get(self.name.lower())
+        message['recipient_name'] = message.get("recipient").get("name")
+        message['recipient_gender'] = "先生" if message.get("recipient").get("gender") == "male" else "女士"
         render_url = message.get('render_url', "www.baidu.com")  # 模版消息生效字段
         fault_time = message.get('fault_time')  # 模版消息生效字段
         fault_location = message.get('location', "请检查配置文件中的location字段")  # 模版消息生效字段
         remark = DEVICE_FAULT_MESSAGE_TEMPLATE.format(**message)
         self.send_network_outage_notification(to_user, render_url, fault_location, fault_time, remark)
 
-    def send_recovery_notify(self, user_info: dict, message: dict):
-        raise NotImplementedError
+    def send_recovery_notify(self,message: dict):
+        """发送恢复通知"""
+        to_user = message.get("recipient").get(self.name.lower())
+        message['recipient_name'] = message.get("recipient").get("name")
+        message['recipient_gender'] = "先生" if message.get("recipient").get("gender") == "male" else "女士"
+        render_url = message.get('render_url', "www.baidu.com")  # 模版消息生效字段
+        fault_time = message.get('fault_time')  # 模版消息生效字段
+        recovery_time = message.get('recovery_time')  # 模版消息生效字段
+        fault_location = message.get('location', "请检查配置文件中的location字段")  # 模版消息生效字段
+        remark = DEVICE_FAULT_MESSAGE_TEMPLATE.format(**message)
+        self.send_network_recovery_notification(to_user, render_url, fault_location, fault_time, recovery_time, remark)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,9 @@ from model.models import Devices, Failure_ticket
 from model.session import SessionLocal
 from sqlalchemy.orm import class_mapper, ColumnProperty
 import json
-
+from urllib.parse import urlunparse, urlencode
+import logging
+logger = logging.getLogger(__name__)
 
 class DevicesMonitor(BaseMonitor):
     """设备监控"""
@@ -56,39 +58,40 @@ class DevicesMonitor(BaseMonitor):
         """执行设备检测"""
         return perform_async_check_devices(self.monitor_targets)
 
-    def is_fault_ticket_exist(self, msg: dict):
+    def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在"""
         device_id = msg.get("id")
-        devices = self.sql_session.query(Failure_ticket).filter(Failure_ticket.device_id == device_id
-                                                                and Failure_ticket.is_done != True).all()
+        devices = self.sql_session.query(Failure_ticket).filter((Failure_ticket.device_id == device_id) &
+                                                                (Failure_ticket.is_done != True)).all()
         if devices:
-            return True
-        return False
+            msg["fault_ticket_id"] = devices[0].id
+            return devices
+        return []
 
     def generate_fault_ticket(self, msg: dict):
-        """生成维护工单"""
+        """生成维护工单,返回工单id"""
         device_id = msg.get("id")
-        device = self.sql_session.query(Devices).filter(Devices.id == device_id).first()
         fault_ticket = Failure_ticket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
-                                      is_done=False)
+                                      is_done=False, description=msg['description'])
         self.sql_session.add(fault_ticket)
         self.sql_session.commit()
+        msg["fault_ticket_id"] = fault_ticket.id
 
-    def object_as_dict(self, obj):
-        """Converts an SQLAlchemy object to a dictionary."""
-        # return {column.key: getattr(obj, column.key)
-        #         for column in class_mapper(obj.__class__).mapped_table.c}
+    def remove_fault_ticket(self, msg: dict, fault_tickets: list):
+        """故障清除"""
+        for fault_ticket in fault_tickets:
+            fault_ticket.is_done = True
+            fault_ticket.recovery_time = msg["recovery_time"]
+        self.sql_session.commit()
 
-        data = {}
-        for prop in class_mapper(obj.__class__).iterate_properties:
-            if isinstance(prop, ColumnProperty):
-                data[prop.key] = getattr(obj, prop.key)
-            else:
-                # Handle relationships (e.g., ForeignKey)
-                rel = getattr(obj, prop.key)
-                if rel is not None:
-                    if isinstance(rel, list):  # For one-to-many or many-to-many relationships
-                        data[prop.key] = [self.object_as_dict(item) for item in rel]
-                    else:  # For one-to-one or many-to-one relationships
-                        data[prop.key] = self.object_as_dict(rel)
-        return data
+    def generate_fault_url(self, msg: dict):
+        """生成故障url"""
+
+        scheme = 'http'
+        netloc = '192.168.1.86:8090'
+        path = '/device_failure'
+        query = {'ticket_id': msg['fault_ticket_id'], 'user_id': msg['recipient']['user_id']}
+        query_string = urlencode(query)
+        url = urlunparse((scheme, netloc, path, '', query_string, ""))
+        logger.info(f"fault url:{url}")
+        return url
