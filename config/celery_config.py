@@ -5,6 +5,11 @@ beat_schedule = {
     'test': {
         'task': 'tasks.devices_check_tasks.device_checker',
         'schedule': 120,  # 单位秒
-        'args': ()  # 替换为你要爬取的 URL
+        'args': ()
     },
+    "baishan_auto_recover_accounts_every_hour": {
+        "task": "tasks.crawler_tasks.baishan_auto_recover_accounts",
+        "schedule": 3660,  # 每隔一个小时
+        "args": ()
+    }
 }
