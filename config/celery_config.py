@@ -5,7 +5,7 @@ broker_url = 'redis://localhost:6379/0'
 result_backend = 'redis://localhost:6379/1'
 beat_schedule = {
     'test': {
-        'task': 'tasks.monitor.device_checker',
+        'task': 'tasks.monitor_tasks.device_checker',
         'schedule': 600,  # 每隔10分钟
         'args': ()
     },

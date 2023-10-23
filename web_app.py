@@ -4,8 +4,9 @@ from flask import Flask, render_template, request
 from model.models import Devices, FailureTicket, User,UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
+import logging
 
-
+logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
 
@@ -110,17 +111,6 @@ def user_notify_frequency():
         return {"code": 0, "msg": "success"}
     else:
         return {"code": 1, "msg": "参数错误"}
-
-
-@app.route('/user/<username>')
-def show_user_profile(username):
-    return 'User %s' % username
-
-
-@app.route('/search')
-def search():
-    query = request.args.get('q')
-    return 'You searched for: %s' % query
 
 
 if __name__ == '__main__':
