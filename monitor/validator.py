@@ -3,8 +3,9 @@ from config.setting import NOTICE_START_TIME, NOTICE_END_TIME
 from abc import ABC, abstractmethod
 from model.session import SessionLocal
 from model.models import UserNotifyFrequency, FailureTicket
-from sqlalchemy.orm import joinedload
+import logging
 
+logger = logging.getLogger(__name__)
 
 
 class TimeValidateError(Exception):
@@ -46,9 +47,12 @@ class UserNotifyFrequencyValidation(BaseValidation):
                                          UserNotifyFrequency.failure_ticket_id == failure_ticket_id,
                                          FailureTicket.is_done == False)
                                  .first())
+        logger.debug(f"user_notify_frequency:{user_notify_frequency}")
         if user_notify_frequency:
             next_notify_time = user_notify_frequency.next_notify_time
             current_time = datetime.now()
+            logger.debug(f"next_notify_time:{next_notify_time},current_time:{current_time}")
             if next_notify_time > current_time:
                 raise TimeValidateError("稍后回复")
+
         return message

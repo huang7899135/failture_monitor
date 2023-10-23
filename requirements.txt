@@ -6,3 +6,6 @@ aioping~=0.4.0
 urllib3~=1.26.16
 sqlalchemy~=2.0.21
 flask~=3.0.0
+pymysql~=1.1.0
+redis~=5.0.0
+pytz~=2023.3.post1
