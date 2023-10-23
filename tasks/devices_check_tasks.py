@@ -1,5 +1,5 @@
 from celery import Celery
-from monitor.base import DevicesMonitor
+from monitor.device_monitor import DevicesMonitor
 
 app = Celery('pcdn_monitor')
 app.config_from_object('config.celery_config')
