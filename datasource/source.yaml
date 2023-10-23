@@ -50,15 +50,15 @@ devices:
   - device: '空港电源'
     location: '成都空港集团机房'
     device_type: "电源"
-    is_effective: False
+    is_effective: True
     address: "117.176.217.131"
     port: "10171"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "浩亿"
 
   - device: '智谷电源'
     location: '成都智谷机房'
-    is_effective: true
+    is_effective: False
     device_type: "电源"
     address: "183.222.16.253"
     port: "8055"
@@ -67,7 +67,7 @@ devices:
 
   - device: '内网群辉'
     location: 'home'
-    is_effective: true
+    is_effective: False
     device_type: "管理线路"
     address: "192.168.1.100"
     port: "5000"
@@ -79,9 +79,9 @@ devices:
     is_effective: true
     device_type: "管理线路"
     address: "117.176.217.131"
-    port: "12221"
+    port: "10221"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '南河2'
     location: '广元利州南河2'
@@ -90,16 +90,16 @@ devices:
     address: "117.176.217.131"
     port: "12201"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '摩配街'
     location: '广元摩配街'
     is_effective: true
     device_type: "管理线路"
     address: "117.176.217.131"
-    port: "12201"
+    port: "12219"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '新观'
     location: '广元新观'
@@ -108,25 +108,34 @@ devices:
     address: "117.176.217.131"
     port: "10218"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
+
+  - device: '石门'
+    location: '广元石门'
+    is_effective: true
+    device_type: "管理线路"
+    address: "117.176.217.131"
+    port: "12251"
+    check_method: "tcp"
+    notify_group: "西胜"
 
   - device: '榆林'
     location: '广元旺苍榆林'
-    is_effective: true
+    is_effective: False
     device_type: "管理线路"
     address: "223.87.57.178"
     check_method: "icmp"
-    notify_group: "test"
+    notify_group: "西胜"
     max_retry: 20
 
   - device: '白马路'
     location: '广元摩配街'
-    is_effective: true
+    is_effective: False
     device_type: "管理线路"
     address: "117.176.217.131"
     port: "12138"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '青川'
     location: '广元青川双创中心'
@@ -135,7 +144,7 @@ devices:
     address: "117.176.217.131"
     port: "12221"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '万圣家园'
     location: '成都万圣家园'
@@ -144,7 +153,7 @@ devices:
     address: "117.176.217.131"
     port: "10211"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '中梁瑞府'
     location: '成都中粮瑞福'
@@ -153,7 +162,7 @@ devices:
     address: "117.176.217.131"
     port: "10091"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '兴盛国际'
     location: '成都兴盛国际'
@@ -162,7 +171,7 @@ devices:
     address: "117.176.217.131"
     port: "10161"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '北斗产业园'
     location: '成都天回镇北斗产业园'
@@ -171,7 +180,7 @@ devices:
     address: "117.176.217.131"
     port: "41055"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '成都北门'
     location: '张叔'
@@ -180,7 +189,7 @@ devices:
     address: "117.176.217.131"
     port: "31202"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '德润园'
     location: '成都德润园'
@@ -188,7 +197,7 @@ devices:
     device_type: "管理线路"
     address: "117.175.166.36"
     check_method: "icmp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '新津'
     location: '成都新津'
@@ -197,7 +206,7 @@ devices:
     address: "117.176.217.131"
     port: "19081"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '生命科技园'
     location: '生命科技园'
@@ -206,7 +215,7 @@ devices:
     address: "117.176.217.131"
     port: "12231"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '蒲阳'
     location: '蒲阳街道'
@@ -215,7 +224,7 @@ devices:
     address: "117.176.217.131"
     port: "10131"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '海思科'
     location: '海思科广场'
@@ -224,7 +233,7 @@ devices:
     address: "117.176.217.131"
     port: "12035"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '磨床厂'
     location: '天回磨床厂'
@@ -232,24 +241,15 @@ devices:
     device_type: "管理线路"
     address: "183.223.216.73"
     check_method: "icmp"
-    notify_group: "test"
-
-  - device: '简阳2'
-    location: '简阳2农村坝坝头'
-    is_effective: true
-    device_type: "管理线路"
-    address: "117.176.217.131"
-    port: "12121"
-    check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '金堂'
     location: '金堂县钟楼'
     is_effective: true
     device_type: "管理线路"
-    address: "223.87.234.3"
+    address: "223.87.234.2"
     check_method: "icmp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '龙湖'
     location: '龙湖地下室'
@@ -258,7 +258,7 @@ devices:
     address: "117.176.217.131"
     port: "10121"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '乡城'
     location: '甘孜乡城'
@@ -267,7 +267,7 @@ devices:
     address: "117.176.217.131"
     port: "10011"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '德格'
     location: '甘孜德格'
@@ -276,7 +276,7 @@ devices:
     address: "117.176.217.131"
     port: "10191"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '新龙'
     location: '甘孜新龙'
@@ -285,7 +285,7 @@ devices:
     address: "117.176.217.131"
     port: "10231"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '新龙2'
     location: '东娃楼上'
@@ -294,7 +294,7 @@ devices:
     address: "117.176.217.131"
     port: "10111"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '泸定'
     location: '甘孜泸定'
@@ -303,7 +303,7 @@ devices:
     address: "117.176.217.131"
     port: "12041"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"
 
   - device: '甘孜县'
     location: '甘孜州甘孜县甘孜街道'
@@ -312,4 +312,4 @@ devices:
     address: "117.176.217.131"
     port: "10041"
     check_method: "tcp"
-    notify_group: "test"
+    notify_group: "西胜"

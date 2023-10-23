@@ -1,7 +1,10 @@
+from datetime import datetime
+import pytz
 from flask import Flask, render_template, request
-from model.models import Devices, Failure_ticket, User
+from model.models import Devices, FailureTicket, User,UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
+
 
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
@@ -18,7 +21,7 @@ def index():
         recipient_gender = "先生" if user_obj.gender == "male" else "女士"
     failure_ticket_id = request.args.get('ticket_id')
     if failure_ticket_id:
-        failure_ticket = SessionLocal().query(Failure_ticket).filter(Failure_ticket.id == failure_ticket_id).first()
+        failure_ticket = SessionLocal().query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
         data = {
             "device_name": failure_ticket.device.name,
             "location": failure_ticket.device.location,
@@ -53,10 +56,57 @@ def index2():
     failure_ticket_id = data.get('ticket_id')
 
     if user_id and failure_ticket_id:
-        failure_ticket = SessionLocal().query(Failure_ticket).filter(Failure_ticket.id == failure_ticket_id).first()
+        failure_ticket = SessionLocal().query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
         failure_ticket.is_accepted = True
         failure_ticket.handler_id = user_id
         SessionLocal().commit()
+        return {"code": 0, "msg": "success"}
+    else:
+        return {"code": 1, "msg": "参数错误"}
+
+
+@app.route('/user_notify_frequency', methods=['POST'])
+def user_notify_frequency():
+    """
+    修改用户通知频率,处理1小时后发送,当日不发送,自定义时间后发送,和不发送
+    不发送将设置devcie的is_effective字段为False
+    其他情况设置UserNotifyFrequency的next_notify_time时间,并由UserNotifyFrequencyValidation检测是否符合next_notify_time条件
+    :return:
+    """
+    sql_session = SessionLocal()
+    data = request.json
+    user_id = data.get('user_id')
+    failure_ticket_id = data.get('ticket_id')
+    next_notify_time = data.get('next_notify_time')
+    print(next_notify_time)
+    # 如果next_notify_time转换成datatime对象,并跟当前日期对比,如果小于now,则返回错误
+    if next_notify_time:
+        # next_notify_time = datetime.strptime(next_notify_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        next_notify_time = datetime.strptime(next_notify_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        utc_time = next_notify_time.replace(tzinfo=pytz.UTC)
+        # next_notify_time = datetime.strptime(next_notify_time, "%Y-%m-%d %H:%M:%S")
+        next_notify_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
+        current_time = datetime.now().astimezone(pytz.timezone('Asia/Shanghai'))
+
+        print(next_notify_time)
+        print(current_time)
+        if next_notify_time < current_time:
+            return {"code": 1, "msg": "next_notify_time不能小于当前时间"}
+
+    # 查找是否有对应的user_obj, failure_ticket_obj
+    user_obj = sql_session.query(User).filter(User.id == user_id).first()
+    failure_ticket_obj = sql_session.query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
+    if user_obj and failure_ticket_obj and next_notify_time:
+        # 查找是否有对应的UserNotifyFrequency对象
+        user_notify_frequency_obj = sql_session.query(UserNotifyFrequency).filter(
+            (UserNotifyFrequency.user_id == user_id) & (UserNotifyFrequency.failure_ticket_id == failure_ticket_id)).first()
+        if user_notify_frequency_obj:
+            user_notify_frequency_obj.next_notify_time = next_notify_time
+        else:
+            user_notify_frequency_obj = UserNotifyFrequency(user_id=user_id, failure_ticket_id=failure_ticket_id,
+                                                            next_notify_time=next_notify_time)
+            sql_session.add(user_notify_frequency_obj)
+        sql_session.commit()
         return {"code": 0, "msg": "success"}
     else:
         return {"code": 1, "msg": "参数错误"}

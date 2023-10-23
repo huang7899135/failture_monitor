@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>故障通知单</title>
-    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/2.4.3/weui.min.css">
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/weui.min.css') }}">
+
     <style>
         .responsive-image {
             max-width: 100%; /* 使图片的最大宽度为其容器的宽度 */
@@ -87,12 +86,12 @@
                             </p>
                         </div>
                         {% if processors %}
-                            <div role="option" class="weui-media-box weui-media-box_text">
-                                <strong class="weui-media-box__title">故障处理人</strong>
-                                <p class="weui-media-box__desc">
-                                    {{ processors }}
-                                </p>
-                            </div>
+                        <div role="option" class="weui-media-box weui-media-box_text">
+                            <strong class="weui-media-box__title">故障处理人</strong>
+                            <p class="weui-media-box__desc">
+                                {{ processors }}
+                            </p>
+                        </div>
                         {% endif %}
                         <div role="option" class="weui-media-box weui-media-box_text">
                             <strong class="weui-media-box__title">内容</strong>
@@ -119,7 +118,7 @@
                 <!--                <div class="weui-panel__hd">我的</div>-->
                 <div class="weui-panel__bd">
                     <!-- 这里可以添加用户的信息内容 -->
-                    <img src="{{ url_for('static', filename='test.jpg') }}" alt="Description of Image"
+                    <img src="{{ url_for('static', filename='img/test.jpg') }}" alt="Description of Image"
                          class="responsive-image">
 
                 </div>
@@ -161,9 +160,9 @@
     <div class="weui-mask" id="mask" style="display: none;"></div>
     <div class="weui-actionsheet" id="weui_actionsheet">
         <div class="weui-actionsheet__menu">
-            <div class="weui-actionsheet__cell">1个小时</div>
-            <div class="weui-actionsheet__cell">今日内不再发送</div>
-            <div class="weui-actionsheet__cell">停止发送</div>
+            <div class="weui-actionsheet__cell" id="send-in-hour">1个小时</div>
+            <div class="weui-actionsheet__cell" id="no-send-today">今日内不再发送</div>
+            <div class="weui-actionsheet__cell" id="never-send">停止发送</div>
             <div class="weui-actionsheet__cell" id="showDatePicker">手动选择发送时间</div>
         </div>
         <div class="weui-actionsheet__action">
@@ -171,7 +170,8 @@
         </div>
     </div>
 </div>
-
+<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weui.min.css') }}"></script>
 <script>
     // 切换Tab的功能
     $('.weui-tabbar__item').on('click', function () {
@@ -227,7 +227,7 @@
                 if (res.code === 0) {
                     weui.toast('接单成功', 1000);
                     setTimeout(function () {
-                    //     刷新本页
+                        //     刷新本页
                         window.location.reload();
                     }, 1000);
                 } else {
@@ -235,6 +235,55 @@
                 }
             }
         });
+    });
+
+    function sent_next_time(time) {
+        let url = window.location.href;
+        let params = url.split('?')[1].split('&');
+        let data = {};
+        for (let i = 0; i < params.length; i++) {
+            let param = params[i].split('=');
+            data[param[0]] = param[1];
+        }
+        data['next_notify_time'] = time;
+        $.ajax({
+            url: '/user_notify_frequency',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function (res) {
+                if (res.code === 0) {
+                    weui.toast('设置成功', 1000);
+                    setTimeout(function () {
+                        //     刷新本页
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    weui.alert(res.msg);
+                }
+            }
+        });
+    }
+
+    //     处理稍后通知的功能,获取当前的datetime,在根据用户选择的内容
+    //     1小时后,就是当前时间加上1个小时,生成next_notify_time,post给后端
+    //     今日内不再发送,就返回明日的0点,生成next_notify_time,post给后端
+    //     停止发送,就返回一个很大的时间,生成next_notify_time,post给后端
+    //     手动选择发送时间,就弹出日期选择器,生成next_notify_time,post给后端
+    $('#send-in-hour').on('click', function () {
+        let now = new Date();
+        console.log(now)
+        let next_time = new Date(now.getTime() + 60 * 60 * 1000);
+        sent_next_time(next_time);
+    });
+    $('#no-send-today').on('click', function () {
+        let now = new Date();
+        let next_time = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        sent_next_time(next_time);
+    });
+    $('#never-send').on('click', function () {
+        let next_time = new Date(9999, 12, 31);
+        sent_next_time(next_time);
     });
 </script>
 </body>

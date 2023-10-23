@@ -68,7 +68,7 @@ class AsyncDeviceOnlineChecker:
                 self.kwargs["is_online"] = True
                 return self.kwargs
         self.kwargs["is_online"] = False
-        self.kwargs["fault_time"] = datetime.utcnow()
+        self.kwargs["fault_time"] = datetime.now()
         return self.kwargs
 
 

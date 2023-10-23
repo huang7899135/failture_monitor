@@ -52,7 +52,7 @@ class Devices(Base):
     group = relationship('Group', backref='devices')  # 定义orm关系
 
 
-class Failure_ticket(Base):
+class FailureTicket(Base):
     __tablename__ = 'failure_tickets'
 
     id = Column(Integer, Sequence('failure_ticket_id_seq'), primary_key=True)
@@ -80,5 +80,5 @@ class UserNotifyFrequency(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', backref='user_notify_configurations')
     failure_ticket_id = Column(Integer, ForeignKey('failure_tickets.id'))
-    failure_ticket = relationship('Failure_ticket', backref='user_notify_configurations')
+    failure_ticket = relationship('FailureTicket', backref='user_notify_configurations')
     next_notify_time = Column(DateTime)

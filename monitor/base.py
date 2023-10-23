@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 import yaml
 import logging
-from monitor.validator import TimeValidation, CallMeLaterValidation
+from monitor.validator import TimeValidation, UserNotifyFrequencyValidation
 from config.setting import MONITOR_OBJECTS_DATA_SOURCE, MONITOR_OBJECTS_DATA_YAML_PATH
 from notifier.wechat_template_message import WeChatTemplateMessage
 
@@ -15,7 +15,7 @@ class BaseMonitor(object):
         self.send_group = None
         self.monitor_targets = self.get_monitor_targets()
         # self.notification_recipient_group = self.get_notification_recipient_group()
-        self.Validations = [TimeValidation, CallMeLaterValidation]
+        self.Validations = [TimeValidation, UserNotifyFrequencyValidation]
         self.message_sender = [WeChatTemplateMessage]
 
     # def get_monitor_objects_data(self):
@@ -67,11 +67,7 @@ class BaseMonitor(object):
 
     def send_fault_notify(self, msg: dict):
         """发送故障通知"""
-        try:
-            msg = self.validate(msg)
-        except Exception as e:
-            logger.warning(f"验证失败:{e},取消发送")
-            return
+
         recipients = self.get_notify_recipient(msg)
         if not recipients:
             logger.warning(f"没有找到对应的通知接收人,取消发送")
@@ -93,7 +89,12 @@ class BaseMonitor(object):
                 if recipient.get(sender.name.lower()):
                     msg["recipient"] = recipient
                     msg['render_url'] = self.generate_fault_url(msg)
-                    sender().send_fault_notify( message=msg)
+                    try:
+                        msg = self.validate(msg)
+                    except Exception as e:
+                        logger.warning(f"验证失败:{e},取消发送")
+                        return
+                    sender().send_fault_notify(message=msg)
 
     def generate_fault_url(self, msg: dict):
         """生成故障url"""

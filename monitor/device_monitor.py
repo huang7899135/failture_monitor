@@ -1,7 +1,7 @@
 from monitor.base import BaseMonitor
 from checker.devices_checker.checker import perform_async_check_devices
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE
-from model.models import Devices, Failure_ticket
+from model.models import Devices, FailureTicket
 from model.session import SessionLocal
 from sqlalchemy.orm import class_mapper, ColumnProperty
 import json
@@ -61,8 +61,8 @@ class DevicesMonitor(BaseMonitor):
     def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在"""
         device_id = msg.get("id")
-        devices = self.sql_session.query(Failure_ticket).filter((Failure_ticket.device_id == device_id) &
-                                                                (Failure_ticket.is_done != True)).all()
+        devices = self.sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
+                                                               (FailureTicket.is_done != True)).all()
         if devices:
             msg["fault_ticket_id"] = devices[0].id
             return devices
@@ -71,8 +71,8 @@ class DevicesMonitor(BaseMonitor):
     def generate_fault_ticket(self, msg: dict):
         """生成维护工单,返回工单id"""
         device_id = msg.get("id")
-        fault_ticket = Failure_ticket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
-                                      is_done=False, description=msg['description'])
+        fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
+                                     is_done=False)
         self.sql_session.add(fault_ticket)
         self.sql_session.commit()
         msg["fault_ticket_id"] = fault_ticket.id
@@ -88,7 +88,7 @@ class DevicesMonitor(BaseMonitor):
         """生成故障url"""
 
         scheme = 'http'
-        netloc = '192.168.1.86:8090'
+        netloc = '192.168.68.179:8090'
         path = '/device_failure'
         query = {'ticket_id': msg['fault_ticket_id'], 'user_id': msg['recipient']['user_id']}
         query_string = urlencode(query)
