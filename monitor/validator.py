@@ -32,7 +32,7 @@ class TimeValidation(BaseValidation):
 
 class UserNotifyFrequencyValidation(BaseValidation):
     """稍后回复限制"""
-    # FIXME: 未完成
+    # FIXME: 再celery查询出的user_nofify_frequency跟最新的值不一致?
     def validate(self, message):
 
         user_id = message.get("recipient").get("user_id")

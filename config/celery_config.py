@@ -1,6 +1,7 @@
 from celery.schedules import crontab
 
 """celery配置文件"""
+timezone = 'Asia/Shanghai'
 broker_url = 'redis://localhost:6379/0'
 result_backend = 'redis://localhost:6379/1'
 beat_schedule = {
