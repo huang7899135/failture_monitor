@@ -1,3 +1,4 @@
+from config.setting import NETLOC
 from monitor.base import BaseMonitor
 from checker.devices_checker.checker import perform_async_check_devices
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE
@@ -88,7 +89,7 @@ class DevicesMonitor(BaseMonitor):
         """生成故障url"""
 
         scheme = 'http'
-        netloc = '192.168.68.179:8090'
+        netloc = NETLOC
         path = '/device_failure'
         query = {'ticket_id': msg['fault_ticket_id'], 'user_id': msg['recipient']['user_id']}
         query_string = urlencode(query)

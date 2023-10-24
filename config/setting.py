@@ -14,9 +14,13 @@ DATABASE_CONFIG = {
     'dialect': 'mysql+pymysql',
     'user': 'root',
     'password': 'xs123456',
-    'host': 'localhost',
+    'host': '172.17.0.2',
     'port': '3306',
     'database': 'failure_monitor'
 }
 
 DATABASE_URL = f"{DATABASE_CONFIG['dialect']}://{DATABASE_CONFIG['user']}:{DATABASE_CONFIG['password']}@{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}"
+
+###############render_url################
+
+NETLOC = '36.137.133.155:8090'
