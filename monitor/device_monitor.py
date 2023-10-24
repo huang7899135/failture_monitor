@@ -10,6 +10,7 @@ from urllib.parse import urlunparse, urlencode
 import logging
 logger = logging.getLogger(__name__)
 
+
 class DevicesMonitor(BaseMonitor):
     """设备监控"""
 

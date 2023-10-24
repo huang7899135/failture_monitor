@@ -40,6 +40,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
         if not user_id and not failure_ticket_id:
             return message
         sql_session = SessionLocal()
+        sql_session.expire_all()
         user_notify_frequency = (sql_session.query(UserNotifyFrequency)
                                  .join(FailureTicket,
                                        UserNotifyFrequency.failure_ticket_id == FailureTicket.id)  # 连接查询
