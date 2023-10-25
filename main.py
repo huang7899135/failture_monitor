@@ -9,7 +9,11 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger()
 
 if __name__ == "__main__":
+    import os
+    from utils.logger import setup_logger
 
+    os.environ['APP_ENV'] = "dev"
+    logger = setup_logger()
     monitor = DevicesMonitor()
     monitor.run()
 
