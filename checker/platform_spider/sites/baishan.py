@@ -216,7 +216,7 @@ class Baishan(Platform):
 
         return self.query_fault_accounts()['account_fault_list']
 
-    def perform_server_rack_stress_test(self, p_id, ip_type: str = "ipv4") -> dict:
+    def perform_server_rack_stress_test(self, p_id: str, ip_type: str = "ipv4") -> dict:
         """执行机柜ipv6压测"""
         query_data = {
             "query": "mutation _ ($p_id: Int!, $type: Int!, $ip_type: [String],$servers: [BSCResourceMachineMutationType]) {bscResourceTestScan(p_id: $p_id,type: $type,ip_type: $ip_type,servers: $servers){result}}",
@@ -420,7 +420,7 @@ class Baishan(Platform):
                                     result['data']['bscResourceMachineInfoQuery']]
             else:
                 stress_test_info = [server['stress_test_v6_status'] for server in
-                                     result['data']['bscResourceMachineInfoQuery']]
+                                    result['data']['bscResourceMachineInfoQuery']]
             # 如果有机柜正在压测中,则等待
             if 320018 in stress_test_info:
                 logger.info(f"白山:机柜{ip_type}压测中")
