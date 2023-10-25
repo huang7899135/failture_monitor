@@ -15,7 +15,7 @@ class Baishan(Platform):
         self.before_login()
         login_data = {
             "query": f" {{login(phone: \"{self.login_info['username']}\"password: \"{self.login_info['password']}\") {{is_init, is_sms_verify}}}}"}
-        login_resp = self.session.post(url=self.query_url, json=login_data)
+        login_resp = self.session.post(url=self.query_url, json=login_data, verify=False)
         if login_resp.json()['code'] == 0:
             self.after_login()
             logger.info("白山:登录成功")
@@ -216,7 +216,7 @@ class Baishan(Platform):
 
         return self.query_fault_accounts()['account_fault_list']
 
-    def perform_server_rack_stress_test(self, p_id: str, ip_type: str = "ipv4") -> dict:
+    def perform_server_rack_stress_test(self, p_id: int, ip_type: str = "ipv4") -> dict:
         """执行机柜ipv6压测"""
         query_data = {
             "query": "mutation _ ($p_id: Int!, $type: Int!, $ip_type: [String],$servers: [BSCResourceMachineMutationType]) {bscResourceTestScan(p_id: $p_id,type: $type,ip_type: $ip_type,servers: $servers){result}}",
@@ -232,12 +232,12 @@ class Baishan(Platform):
         }
         resp = self.fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
-            logger.info("白山:机柜ipv6压测提交成功")
+            logger.info(f"白山:机柜{ip_type}压测提交成功")
             return resp.json()
         else:
             raise Exception(resp.json()['msg'])
 
-    def query_server_rack_stress_result(self, p_id: str, ip_type: str):
+    def query_server_rack_stress_result(self, p_id: int):
         """
         p_id,即为上架的id,获取方式为url链接:https://luohan.portal.baishancloud.com/#/resources_mng/detail/2717,最后的2717就是p_id
         查询机柜ipv6压测结果
@@ -249,24 +249,16 @@ class Baishan(Platform):
         :return:
         """
         query_data = {
-            "query": "mutation _ (\n    $p_id: Int!, \n    $type: Int!, \n    $ip_type: [String],\n    $servers: [BSCResourceMachineMutationType]\n    ) {\n      bscResourceTestScan(\n      p_id: $p_id,\n        type: $type,\n        ip_type: $ip_type,\n        servers: $servers\n      ){\n        result\n      }\n    }\n",
+            "query": "\n   query( \n    $p_id: Int!,  \n    $status: Int!,\n    $error_status: String,\n    $env_status: Int,\n    $scanning_status: Int,\n    $dial_status: Int,\n    $stress_test_status: Int,\n    $next_status: Int\n    $orderBy:String\n    $pagination: commonPageType\n  ) {\n    bscResourceMachineInfoQuery(\n      p_id: $p_id,\n      status: $status,\n      error_status: $error_status,\n      env_status: $env_status,\n      scanning_status: $scanning_status,\n      dial_status: $dial_status,\n      stress_test_status: $stress_test_status,\n      next_status: $next_status\n      orderBy: $orderBy\n      pagination: $pagination\n    ) {\n      id,\n      p_id,\n      p_no,\n      sn,\n      re_sn,\n      cabinet,\n      cpus,\n      memorys,\n      networks,\n      SSD,\n      HDD,\n      public_net_addr,\n      private_net_addr,\n      dial_up_network_card,\n      deliver_status,\n      deliver_unicom_status,\n      tcp_in_upper_limit,\n      tcp_in_upper_v6_limit\n      tcp_out_lower_limit,\n      tcp_out_lower_v6_limit\n      map_port_22,\n      map_port_10022,\n      map_port_17251,\n      all_account,\n      account_status_suc,\n      account_status_v6_suc\n      account_status_error,\n      account_status_v6_error\n      status,\n      next_status,\n      env_status,\n      env_error_log\n      scanning_status,\n      scanning_remark,\n      owner,\n      dial_status,\n      stress_test_status,\n      stress_test_v6_status\n      restore_status\n      account_dial_status_suc\n      account_dial_status_error\n      restore_log\n      bandwidth\n      is_hardware_match\n      hardware_match_remark\n      idcs {\n        p_no,\n        server_id,\n        ip,\n        type,\n        cname,\n        key,\n      },\n      accounts {\n        id,\n        p_id,\n        p_no,\n        pppoe_type,\n        server_id,\n        account,\n        passwd,\n        vlan_id,\n        mask,\n        gateway,\n        tcp_in_upper_limit,\n        tcp_in_upper_v6_limit\n        tcp_out_lower_limit,\n        tcp_out_lower_v6_limit\n        retransmission_ratio,\n        retransmission_v6_ratio\n        packet_loss_v6_rate\n        packet_loss_rate,\n        created_at,\n        updated_at,\n        dial_status,\n        dial_ip,\n        dial_ip_v6,\n        account_network_name,\n        dial_status,\n        stress_test_status,\n        stress_test_v6_status\n        dial_error_log,\n        stress_test_remark,\n        stress_test_v6_remark\n        dial_remark,\n        mac,\n        ppp_servicename,\n        ppp_acname\n      },\n      detail {\n        cpu {\n          model,\n          cpu_thread,\n        },\n        memory {\n          size,\n        },\n        network {\n          id,\n          name,\n          mac,\n          bandwidth,\n          ips,\n          adapter_status\n        },\n        ssd {\n          sys_path,     \n          standard_capacity,\n          type,\n        },\n        hdd {\n          sys_path,      \n          standard_capacity,\n          type,\n        },\n      }\n    }\n  }\n  \n",
             "variables": {
-                "p_id": 2717,
-                "type": 1,
-                "ip_type": [
-                    ip_type
-                ],
-                "servers": []
-            },
-            # "variables": {
-            #     "pagination": {
-            #         "current_page": 1,
-            #         "page_size": 15
-            #     },
-            #     "p_id": p_id,
-            #     "status": 1,
-            #     "next_status": 0
-            # }
+                "pagination": {
+                    "current_page": 1,
+                    "page_size": 15
+                },
+                "p_id": p_id,
+                "status": 1,
+                "next_status": 0
+            }
         }
         resp = self.fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
@@ -274,11 +266,11 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def rack_auto_perform_stress_test(self, p_id, ip_type="ipv4"):
+    def rack_auto_perform_stress_test(self, p_id: int, ip_type: str = "ipv4"):
         """上架流程:自动提交压测"""
         wait_time = 30
         for _ in range(1000):
-            result = self.query_server_rack_stress_result(p_id, ip_type=ip_type)
+            result = self.query_server_rack_stress_result(p_id)
             # 提取所有的ipv6压测信息为一个列表
             if ip_type == "ipv4":
                 stress_test_info = [server['stress_test_status'] for server in
