@@ -237,7 +237,7 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def query_server_rack_stress_result(self, p_id):
+    def query_server_rack_stress_result(self, p_id: str, ip_type: str):
         """
         p_id,即为上架的id,获取方式为url链接:https://luohan.portal.baishancloud.com/#/resources_mng/detail/2717,最后的2717就是p_id
         查询机柜ipv6压测结果
@@ -249,159 +249,24 @@ class Baishan(Platform):
         :return:
         """
         query_data = {
-            "query": """
-                   query( 
-                    $p_id: Int!,  
-                    $status: Int!,
-                    $error_status: String,
-                    $env_status: Int,
-                    $scanning_status: Int,
-                    $dial_status: Int,
-                    $stress_test_status: Int,
-                    $next_status: Int
-                    $orderBy:String
-                    $pagination: commonPageType
-                  ) {
-                    bscResourceMachineInfoQuery(
-                      p_id: $p_id,
-                      status: $status,
-                      error_status: $error_status,
-                      env_status: $env_status,
-                      scanning_status: $scanning_status,
-                      dial_status: $dial_status,
-                      stress_test_status: $stress_test_status,
-                      next_status: $next_status
-                      orderBy: $orderBy
-                      pagination: $pagination
-                    ) {
-                      id,
-                      p_id,
-                      p_no,
-                      sn,
-                      re_sn,
-                      cabinet,
-                      cpus,
-                      memorys,
-                      networks,
-                      SSD,
-                      HDD,
-                      public_net_addr,
-                      private_net_addr,
-                      dial_up_network_card,
-                      deliver_status,
-                      deliver_unicom_status,
-                      tcp_in_upper_limit,
-                      tcp_in_upper_v6_limit
-                      tcp_out_lower_limit,
-                      tcp_out_lower_v6_limit
-                      map_port_22,
-                      map_port_10022,
-                      map_port_17251,
-                      all_account,
-                      account_status_suc,
-                      account_status_v6_suc
-                      account_status_error,
-                      account_status_v6_error
-                      status,
-                      next_status,
-                      env_status,
-                      env_error_log
-                      scanning_status,
-                      scanning_remark,
-                      owner,
-                      dial_status,
-                      stress_test_status,
-                      stress_test_v6_status
-                      restore_status
-                      account_dial_status_suc
-                      account_dial_status_error
-                      restore_log
-                      bandwidth
-                      is_hardware_match
-                      hardware_match_remark
-                      idcs {
-                        p_no,
-                        server_id,
-                        ip,
-                        type,
-                        cname,
-                        key,
-                      },
-                      accounts {
-                        id,
-                        p_id,
-                        p_no,
-                        pppoe_type,
-                        server_id,
-                        account,
-                        passwd,
-                        vlan_id,
-                        mask,
-                        gateway,
-                        tcp_in_upper_limit,
-                        tcp_in_upper_v6_limit
-                        tcp_out_lower_limit,
-                        tcp_out_lower_v6_limit
-                        retransmission_ratio,
-                        retransmission_v6_ratio
-                        packet_loss_v6_rate
-                        packet_loss_rate,
-                        created_at,
-                        updated_at,
-                        dial_status,
-                        dial_ip,
-                        dial_ip_v6,
-                        account_network_name,
-                        dial_status,
-                        stress_test_status,
-                        stress_test_v6_status
-                        dial_error_log,
-                        stress_test_remark,
-                        stress_test_v6_remark
-                        dial_remark,
-                        mac,
-                        ppp_servicename,
-                        ppp_acname
-                      },
-                      detail {
-                        cpu {
-                          model,
-                          cpu_thread,
-                        },
-                        memory {
-                          size,
-                        },
-                        network {
-                          id,
-                          name,
-                          mac,
-                          bandwidth,
-                          ips,
-                          adapter_status
-                        },
-                        ssd {
-                          sys_path,     
-                          standard_capacity,
-                          type,
-                        },
-                        hdd {
-                          sys_path,      
-                          standard_capacity,
-                          type,
-                        },
-                      }
-                    }
-                  } 
-                """,
+            "query": "mutation _ (\n    $p_id: Int!, \n    $type: Int!, \n    $ip_type: [String],\n    $servers: [BSCResourceMachineMutationType]\n    ) {\n      bscResourceTestScan(\n      p_id: $p_id,\n        type: $type,\n        ip_type: $ip_type,\n        servers: $servers\n      ){\n        result\n      }\n    }\n",
             "variables": {
-                "pagination": {
-                    "current_page": 1,
-                    "page_size": 15
-                },
-                "p_id": p_id,
-                "status": 1,
-                "next_status": 0
-            }
+                "p_id": 2717,
+                "type": 1,
+                "ip_type": [
+                    ip_type
+                ],
+                "servers": []
+            },
+            # "variables": {
+            #     "pagination": {
+            #         "current_page": 1,
+            #         "page_size": 15
+            #     },
+            #     "p_id": p_id,
+            #     "status": 1,
+            #     "next_status": 0
+            # }
         }
         resp = self.fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
@@ -413,7 +278,7 @@ class Baishan(Platform):
         """上架流程:自动提交压测"""
         wait_time = 30
         for _ in range(1000):
-            result = self.query_server_rack_stress_result(p_id)
+            result = self.query_server_rack_stress_result(p_id, ip_type=ip_type)
             # 提取所有的ipv6压测信息为一个列表
             if ip_type == "ipv4":
                 stress_test_info = [server['stress_test_status'] for server in
