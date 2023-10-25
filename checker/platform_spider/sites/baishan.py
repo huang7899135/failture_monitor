@@ -216,7 +216,7 @@ class Baishan(Platform):
 
         return self.query_fault_accounts()['account_fault_list']
 
-    def perform_server_rack_ipv6_stress_test(self, p_id):
+    def perform_server_rack_stress_test(self, p_id, ip_type: str = "ipv4") -> dict:
         """执行机柜ipv6压测"""
         query_data = {
             "query": "mutation _ ($p_id: Int!, $type: Int!, $ip_type: [String],$servers: [BSCResourceMachineMutationType]) {bscResourceTestScan(p_id: $p_id,type: $type,ip_type: $ip_type,servers: $servers){result}}",
@@ -224,7 +224,7 @@ class Baishan(Platform):
                 "p_id": p_id,
                 "type": 1,
                 "ip_type": [
-                    "ipv6"
+                    ip_type
                 ],
                 "servers": []
             }
@@ -237,10 +237,12 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def query_server_ipv6_stress_result(self, p_id):
+    def query_server_rack_stress_result(self, p_id):
         """
+        p_id,即为上架的id,获取方式为url链接:https://luohan.portal.baishancloud.com/#/resources_mng/detail/2717,最后的2717就是p_id
         查询机柜ipv6压测结果
         code对应含义
+        0: 待压测
         320018: 压测中
         320019: 压测成功
         320020: 压测失败
@@ -407,29 +409,32 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def rack_auto_perform_ipv6_stress_test(self, p_id):
-        """上架流程:自动提交ipv6压测"""
-        # 查询机柜ipv6压测结果
+    def rack_auto_perform_stress_test(self, p_id, ip_type="ipv4"):
+        """上架流程:自动提交压测"""
         wait_time = 30
         for _ in range(1000):
-            result = self.query_server_ipv6_stress_result(p_id)
+            result = self.query_server_rack_stress_result(p_id)
             # 提取所有的ipv6压测信息为一个列表
-            ipv6_stress_test_info = [server['stress_test_v6_status'] for server in
+            if ip_type == "ipv4":
+                stress_test_info = [server['stress_test_status'] for server in
+                                    result['data']['bscResourceMachineInfoQuery']]
+            else:
+                stress_test_info = [server['stress_test_v6_status'] for server in
                                      result['data']['bscResourceMachineInfoQuery']]
             # 如果有机柜正在压测中,则等待
-            if 320018 in ipv6_stress_test_info:
-                logger.info("白山:机柜ipv6压测中")
+            if 320018 in stress_test_info:
+                logger.info(f"白山:机柜{ip_type}压测中")
                 time.sleep(wait_time)
             # 如果有机柜压测失败,则提交压测,并等待
-            elif 320020 in ipv6_stress_test_info:
-                logger.info("白山:机柜ipv6压测失败,提交压测")
-                self.perform_server_rack_ipv6_stress_test(p_id)
+            elif 320020 in stress_test_info:
+                logger.info(f"白山:机柜{ip_type}压测失败,提交压测")
+                self.perform_server_rack_stress_test(p_id, ip_type=ip_type)
                 time.sleep(wait_time)
             # 如果所有机柜压测成功,则退出
-            elif all([item == 320019 for item in ipv6_stress_test_info]):
-                logger.info("白山:机柜ipv6压测成功")
+            elif all([item == 320019 for item in stress_test_info]):
+                logger.info(f"白山:机柜{ip_type}压测成功")
                 return
-        logger.error("白山:机柜ipv6压测失败")
+        logger.error(f"白山:机柜{ip_type}压测失败")
 
 
 if __name__ == "__main__":
