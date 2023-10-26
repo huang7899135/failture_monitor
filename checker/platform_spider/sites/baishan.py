@@ -11,7 +11,7 @@ class Baishan(Platform):
         assert supplier in ["vision_blue", "yicheng"], "只有vision_blue or yicheng "
         self.login_supplier = supplier
         self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                              f"sessions/{self.platform_name}_{supplier}")
+                                              f"sessions/bishan_{supplier}")
         super().__init__()
         self.query_url = "https://service-luohan.bs58i.baishancloud.com/agent/graphql/query"
         self.suppliers = self.login_info["suppliers"]
