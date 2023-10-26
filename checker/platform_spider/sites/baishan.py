@@ -1,27 +1,64 @@
 import logging
 import time
-import requests
+import os
 from .BasePlatform import Platform
 
 logger = logging.getLogger(__name__)
 
 
 class Baishan(Platform):
-    def __init__(self):
+    def __init__(self, supplier: str = ""):
+        assert supplier in ["vision_blue", "yicheng"], "只有vision_blue or yicheng "
+        self.login_supplier = supplier
+        self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                              f"sessions/{self.platform_name}_{supplier}")
         super().__init__()
         self.query_url = "https://service-luohan.bs58i.baishancloud.com/agent/graphql/query"
+        self.suppliers = self.login_info["suppliers"]
 
-    def login(self):
+    def _login(self, supplier_id: int = 1355) -> None:
+        """因为白山有2个公司主体,所以需要登录2次,分别获取2个公司的token"""
         self.before_login()
+        login_url = "https://service-luohan-auth.bs58i.baishancdnx.com/login"
         login_data = {
-            "query": f" {{login(phone: \"{self.login_info['username']}\"password: \"{self.login_info['password']}\") {{is_init, is_sms_verify}}}}"}
-        login_resp = self.session.post(url=self.query_url, json=login_data, verify=False)
-        if login_resp.json()['code'] == 0:
-            self.after_login()
-            logger.info("白山:登录成功")
+            "client_id": "luohan",
+            "phone": self.username,
+            "password": self.password,
+            "supplier_id": supplier_id
+        }
+        login_resp = self.session.post(url=login_url, json=login_data, verify=False)
+        logger.debug(login_resp.json())
+        if login_resp.json()['code'] == 200:
+            # 保存token
+            token = login_resp.json()['data']['jwt_token']
+            test_data = {
+                "query": f"""
+                    {{
+                        SsoValidateQuery(
+                            token: "{token}"
+                        ) {{
+                            id
+                            phone
+                            supplier_name
+                        }}
+                    }}
+                """
+            }
+            resp = self.session.post(url=self.query_url, json=test_data, verify=False)
+            if resp.json()['code'] == 0:
+                self.after_login()
+                logger.info(f"白山:{self.suppliers[self.login_supplier]['supplier_name']}登录成功")
+            else:
+                logger.critical(resp.json()['msg'])
+                raise Exception(login_resp.json()['msg'])
+
         else:
             logger.error(f"白山:{login_resp.json()['msg']}")
             raise Exception(login_resp.json()['msg'])
+
+    def login(self):
+        supplier_id = self.suppliers.get(self.login_supplier).get("supplier_id")
+        self._login(supplier_id)
 
     def logout(self):
         data = {
@@ -164,6 +201,7 @@ class Baishan(Platform):
             }
         }
         resp = self.fetch(url=self.query_url, json=query_data)
+        logger.debug(resp.json())
         if resp.json()['code'] == 0:
             return resp.json()['data']['faultSvrList']
         else:
@@ -302,4 +340,4 @@ if __name__ == "__main__":
     logger = setup_logger()
 
     baishan = Baishan()
-    logger.debug(baishan.query_fault_server())
+    logger.debug(baishan.query_fault_accounts())

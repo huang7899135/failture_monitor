@@ -32,14 +32,14 @@ class Platform(ABC):
             return json.load(f)
 
     @abstractmethod
-    def login(self):
+    def login(self, *args, **kwargs):
         raise NotImplementedError
 
-    def logout(self):
+    def logout(self, *args, **kwargs):
         raise NotImplementedError
 
     def fetch(self, *args, **kwargs):
-        """自定义post请求方法,如果请求失败,则重新登录"""
+        """加载本地session,如果失败就从新登录"""
         if not self.session:
             logger.info("加载本地session失败,从新登录")
             self.login()
@@ -65,10 +65,15 @@ class Platform(ABC):
         return resp
 
     def before_login(self):
+        """
+        登录前的准备工作,初始化session,并设置请求头
+        :return: None
+        """
         self.session = requests.Session()
         self.session.headers['Content-Type'] = 'application/json'
 
     def after_login(self):
+        """登录成功后,修改登录状态,并保行保存session的工作"""
         self.is_login = True
         self.save_session()
 

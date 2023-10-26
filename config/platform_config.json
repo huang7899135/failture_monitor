@@ -2,16 +2,30 @@
   "login_info": {
     "baishan": {
       "username": "13668164299",
-      "password": "Xs123456"
+      "password": "Xs123456",
+      "suppliers": {
+        "vision_blue": {
+          "supplier_id": 1355,
+          "supplier_name": "四川视觉蓝网络科技有限公司",
+          "srm_id": 0,
+          "srm_sub_account": ""
+        },
+        "yicheng": {
+          "supplier_id": 1798,
+          "supplier_name": "四川益成网络科技有限公司",
+          "srm_id": 0,
+          "srm_sub_account": ""
+        }
+      }
+
     },
     "manxing": {
-        "username": "13348936614",
-        "password": "xs123456"
+      "username": "13348936614",
+      "password": "xs123456"
     },
     "xunlei": {
       "username": "21993641",
       "password": "xs123456"
     }
-
   }
 }

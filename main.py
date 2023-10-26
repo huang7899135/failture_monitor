@@ -20,10 +20,11 @@ if __name__ == "__main__":
     # monitor = DevicesMonitor()
     # monitor.run()
 
-    baishan = Baishan()
-    baishan.rack_auto_perform_stress_test(2717, "ipv4")
-    baishan.rack_auto_perform_stress_test(2717, "ipv6")
-    msg = WeChatTemplateMessage()
-    msg.send_network_recovery_notification("ozoJjv3QyBLlDf-PzkxfrRA5aPHk", "http://www.baidu.com", "压测成功了",
-                                           "ipv4", "ipv6", "remark")
+    baishan = Baishan("yicheng")
+    # baishan.query_fault_accounts()
+    # baishan.rack_auto_perform_stress_test(2717, "ipv4")
+    baishan.rack_auto_perform_stress_test(2736, "ipv6")
+    # msg = WeChatTemplateMessage()
+    # msg.send_network_recovery_notification("ozoJjv3QyBLlDf-PzkxfrRA5aPHk", "http://www.baidu.com", "压测成功了",
+    #                                        "ipv4", "ipv6", "remark")
 
