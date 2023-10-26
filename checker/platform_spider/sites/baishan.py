@@ -307,7 +307,7 @@ class Baishan(Platform):
     def rack_auto_perform_stress_test(self, p_id: int, ip_type: str = "ipv4"):
         """上架流程:自动提交压测"""
         wait_time = 30
-        for _ in range(1000):
+        for times in range(1000):
             result = self.query_server_rack_stress_result(p_id)
             # 提取所有的ipv6压测信息为一个列表
             if ip_type == "ipv4":
@@ -327,7 +327,7 @@ class Baishan(Platform):
                 time.sleep(wait_time)
             # 如果所有机柜压测成功,则退出
             elif all([item == 320019 for item in stress_test_info]):
-                logger.info(f"白山:机柜{ip_type}压测成功")
+                logger.info(f"白山:机柜{ip_type}压测成功,共计执行了{times}次")
                 return
         logger.error(f"白山:机柜{ip_type}压测失败")
 
