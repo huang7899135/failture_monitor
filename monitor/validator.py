@@ -4,8 +4,29 @@ from abc import ABC, abstractmethod
 from model.session import SessionLocal
 from model.models import UserNotifyFrequency, FailureTicket
 import logging
-
+import pymysql
 logger = logging.getLogger(__name__)
+
+
+def get_db_connection():
+    connection = pymysql.connect(host='localhost',
+                                 user='root',
+                                 password='xs123456',
+                                 db='failure_ticket',
+                                 charset='utf8')
+    return connection
+
+def query_user_frequency(user_id, failure_ticket_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            # 转换下面的UserNotifyFrequencyValidation中的user_notify_frequency为原生的sql语句:
+            sql = f"select * from user_notify_frequency join failure_ticket on user_notify_frequency.failure_ticket_id = failure_ticket.id where user_notify_frequency.user_id = {user_id} and user_notify_frequency.failure_ticket_id = {failure_ticket_id} and failure_ticket.is_done = False"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return jsonify(result)
+    finally:
+        connection.close()
 
 
 class TimeValidateError(Exception):

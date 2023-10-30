@@ -11,7 +11,7 @@ class Baishan(Platform):
         assert supplier in ["vision_blue", "yicheng"], "只有vision_blue or yicheng "
         self.login_supplier = supplier
         self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                              f"sessions/bishan_{supplier}")
+                                              f"sessions/baishan_{supplier}")
         super().__init__()
         self.query_url = "https://service-luohan.bs58i.baishancloud.com/agent/graphql/query"
         self.suppliers = self.login_info["suppliers"]
@@ -100,6 +100,7 @@ class Baishan(Platform):
             "per_page": per_page,
             "account_fault_list": account_fault_list
         }
+        # logger.debug(account_fault_list)
         return data
 
     @staticmethod
@@ -321,7 +322,7 @@ class Baishan(Platform):
                 logger.info(f"白山:机柜{ip_type}压测中")
                 time.sleep(wait_time)
             # 如果有机柜压测失败,则提交压测,并等待
-            elif 320020 in stress_test_info:
+            elif 320020 in stress_test_info or 0 in stress_test_info:
                 logger.info(f"白山:机柜{ip_type}压测失败,提交压测")
                 self.perform_server_rack_stress_test(p_id, ip_type=ip_type)
                 time.sleep(wait_time)
@@ -329,6 +330,8 @@ class Baishan(Platform):
             elif all([item == 320019 for item in stress_test_info]):
                 logger.info(f"白山:机柜{ip_type}压测成功,共计执行了{times}次")
                 return
+            else:
+                logger.error(f"白山压测状态码为:{stress_test_info}")
         logger.error(f"白山:机柜{ip_type}压测失败")
 
 
@@ -339,5 +342,5 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    baishan = Baishan()
+    baishan = Baishan("vision_blue")
     logger.debug(baishan.query_fault_accounts())
