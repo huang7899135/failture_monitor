@@ -338,9 +338,10 @@ class Baishan(Platform):
 if __name__ == "__main__":
     import os
     from utils.logger import setup_logger
+    from pprint import pprint
 
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    baishan = Baishan("vision_blue")
-    logger.debug(baishan.query_fault_accounts())
+    baishan = Baishan("yicheng")
+    baishan.rack_auto_perform_stress_test(2765,ip_type="ipv4")

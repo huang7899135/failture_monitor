@@ -5,6 +5,7 @@ from model.session import SessionLocal
 from model.models import UserNotifyFrequency, FailureTicket
 import logging
 import pymysql
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,6 +17,7 @@ def get_db_connection():
                                  charset='utf8')
     return connection
 
+
 def query_user_frequency(user_id, failure_ticket_id):
     connection = get_db_connection()
     try:
@@ -24,7 +26,8 @@ def query_user_frequency(user_id, failure_ticket_id):
             sql = f"select * from user_notify_frequency join failure_ticket on user_notify_frequency.failure_ticket_id = failure_ticket.id where user_notify_frequency.user_id = {user_id} and user_notify_frequency.failure_ticket_id = {failure_ticket_id} and failure_ticket.is_done = False"
             cursor.execute(sql)
             result = cursor.fetchall()
-            return jsonify(result)
+            logger.debug(f"result:{result}")
+            return
     finally:
         connection.close()
 
@@ -53,6 +56,7 @@ class TimeValidation(BaseValidation):
 
 class UserNotifyFrequencyValidation(BaseValidation):
     """稍后回复限制"""
+
     # FIXME: 再celery查询出的user_nofify_frequency跟最新的值不一致?
     def validate(self, message):
 

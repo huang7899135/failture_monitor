@@ -1,9 +1,6 @@
-import os
 from datetime import datetime
-import yaml
 import logging
-from monitor.validator import TimeValidation, UserNotifyFrequencyValidation
-from config.setting import MONITOR_OBJECTS_DATA_SOURCE, MONITOR_OBJECTS_DATA_YAML_PATH
+from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation
 from notifier.wechat_template_message import WeChatTemplateMessage
 
 logger = logging.getLogger(__name__)
