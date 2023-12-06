@@ -18,16 +18,16 @@ def get_db_connection():
     return connection
 
 
-def query_user_frequency(user_id, failure_ticket_id):
+def query_user_notify_time(user_id, failure_ticket_id):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             # 转换下面的UserNotifyFrequencyValidation中的user_notify_frequency为原生的sql语句:
-            sql = f"select * from user_notify_frequency join failure_ticket on user_notify_frequency.failure_ticket_id = failure_ticket.id where user_notify_frequency.user_id = {user_id} and user_notify_frequency.failure_ticket_id = {failure_ticket_id} and failure_ticket.is_done = False"
+            sql = f"select next_notify_time from user_notify_frequency join failure_tickets on user_notify_frequency.failure_ticket_id = failure_tickets.id where user_notify_frequency.user_id = {user_id} and user_notify_frequency.failure_ticket_id = {failure_ticket_id} and failure_tickets.is_done = False"
             cursor.execute(sql)
             result = cursor.fetchall()
-            logger.debug(f"result:{result}")
-            return
+            logger.debug(f"origin sql notify time is :{result}")
+            return result
     finally:
         connection.close()
 
@@ -57,7 +57,7 @@ class TimeValidation(BaseValidation):
 class UserNotifyFrequencyValidation(BaseValidation):
     """稍后回复限制"""
 
-    # FIXME: 再celery查询出的user_nofify_frequency跟最新的值不一致?
+    # FIXME: 再celery查询出的user_notify_frequency跟最新的值不一致?
     def validate(self, message):
 
         user_id = message.get("recipient").get("user_id")
@@ -77,7 +77,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
         if user_notify_frequency:
             next_notify_time = user_notify_frequency.next_notify_time
             current_time = datetime.now()
-            logger.debug(f"next_notify_time:{next_notify_time},current_time:{current_time}")
+            logger.debug(f"sqlalchemy query next_notify_time:{next_notify_time},current_time:{current_time}")
             if next_notify_time > current_time:
                 raise TimeValidateError("稍后回复")
 

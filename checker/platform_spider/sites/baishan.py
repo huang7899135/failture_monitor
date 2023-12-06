@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class Baishan(Platform):
     def __init__(self, supplier: str = ""):
         assert supplier in ["vision_blue", "yicheng"], "只有vision_blue or yicheng "
+        logger.info(f"白山:{supplier}初始化中...")
         self.login_supplier = supplier
         self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                               f"sessions/baishan_{supplier}")
@@ -27,7 +28,7 @@ class Baishan(Platform):
             "supplier_id": supplier_id
         }
         login_resp = self.session.post(url=login_url, json=login_data, verify=False)
-        logger.debug(login_resp.json())
+        # logger.debug(login_resp.json())
         if login_resp.json()['code'] == 200:
             # 保存token
             token = login_resp.json()['data']['jwt_token']
@@ -202,7 +203,7 @@ class Baishan(Platform):
             }
         }
         resp = self.fetch(url=self.query_url, json=query_data)
-        logger.debug(resp.json())
+        # logger.debug(resp.json())
         if resp.json()['code'] == 0:
             return resp.json()['data']['faultSvrList']
         else:

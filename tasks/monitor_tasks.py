@@ -15,9 +15,13 @@ def device_checker():
 
 
 @app.task
-def baishan_auto_recover_accounts():
+def yicheng_auto_recover_accounts():
     """白山自动恢复账号故障"""
     yicheng = Baishan("yicheng")
     yicheng.auto_recover_accounts()
+
+
+@app.task
+def vision_blue_auto_recover_accounts():
     vision_blue = Baishan("vision_blue")
     vision_blue.auto_recover_accounts()
