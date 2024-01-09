@@ -20,8 +20,8 @@ if __name__ == "__main__":
     # monitor = DevicesMonitor()
     # monitor.run()
 
-    yicheng = Baishan("yicheng")
-    yicheng.auto_recover_accounts()
+    # yicheng = Baishan("yicheng")
+    # yicheng.auto_recover_accounts()
     vision_blue = Baishan("vision_blue")
     vision_blue.auto_recover_accounts()
 

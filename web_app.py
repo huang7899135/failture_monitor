@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytz
 from flask import Flask, render_template, request
-from model.models import Devices, FailureTicket, User,UserNotifyFrequency
+from model.models import Devices, FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
 import logging
@@ -12,6 +12,7 @@ app = Flask(__name__, template_folder='web/templates', static_folder='web/static
 
 @app.route('/device_failure', methods=['GET'])
 def index():
+    """用户故障通知视图"""
     user_id = request.args.get('user_id')
 
     recipient_name = ""
@@ -76,10 +77,11 @@ def user_notify_frequency():
     """
     sql_session = SessionLocal()
     data = request.json
+    print("recept_data", data)
     user_id = data.get('user_id')
     failure_ticket_id = data.get('ticket_id')
     next_notify_time = data.get('next_notify_time')
-    print(next_notify_time)
+    print("next_notify_time", next_notify_time)
     # 如果next_notify_time转换成datatime对象,并跟当前日期对比,如果小于now,则返回错误
     if next_notify_time:
         # next_notify_time = datetime.strptime(next_notify_time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -89,8 +91,8 @@ def user_notify_frequency():
         next_notify_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
         current_time = datetime.now().astimezone(pytz.timezone('Asia/Shanghai'))
 
-        print(next_notify_time)
-        print(current_time)
+        print("format_next_notify_time", next_notify_time)
+        print("current_time", current_time)
         if next_notify_time < current_time:
             return {"code": 1, "msg": "next_notify_time不能小于当前时间"}
 
@@ -100,7 +102,8 @@ def user_notify_frequency():
     if user_obj and failure_ticket_obj and next_notify_time:
         # 查找是否有对应的UserNotifyFrequency对象
         user_notify_frequency_obj = sql_session.query(UserNotifyFrequency).filter(
-            (UserNotifyFrequency.user_id == user_id) & (UserNotifyFrequency.failure_ticket_id == failure_ticket_id)).first()
+            (UserNotifyFrequency.user_id == user_id) & (
+                        UserNotifyFrequency.failure_ticket_id == failure_ticket_id)).first()
         if user_notify_frequency_obj:
             user_notify_frequency_obj.next_notify_time = next_notify_time
         else:
@@ -108,7 +111,9 @@ def user_notify_frequency():
                                                             next_notify_time=next_notify_time)
             sql_session.add(user_notify_frequency_obj)
         sql_session.commit()
-        return {"code": 0, "msg": "success"}
+        # 返回user_notify_frequency_obj的next_notify_time
+        return {"code": 0, "msg": "success", "next_notify_time": user_notify_frequency_obj.next_notify_time}
+        # return {"code": 0, "msg": "success"}
     else:
         return {"code": 1, "msg": "参数错误"}
 

@@ -123,6 +123,9 @@ class Baishan(Platform):
         0 -->待恢复
         1 -->恢复中
         2 -->已完成
+
+        planning_type 网络类型
+        "static"/"pppoe"
         """
         result = {
             "accounts_id_for_dialing": [],
@@ -133,18 +136,21 @@ class Baishan(Platform):
         logger.debug(f"白山:故障记录数量{len(data)}")
         for item in data:
             logger.debug(item)
-            if item['dial_status'] == 1 and item['account_ip'] != "" and item['pressure_test_status'] in [0, 3]:
+            if item['planning_type'] == "static":
                 result['accounts_id_for_stress_test'].append(item['id'])
-            elif item['dial_status'] in [2, 3] or (item['dial_status'] == 1 and not item['account_ip']):
-                result['accounts_id_for_dialing'].append(item['id'])
-            elif item['dial_status'] == 0:
-                result['dialing_accounts'].append(item)
-            elif item['pressure_test_status'] == 1:
-                result['stress_test_accounts'].append(item)
+            else:
+                if item['dial_status'] == 1 and item['account_ip'] and item['ipv6'] and item['pressure_test_status'] in [0, 3]:
+                    result['accounts_id_for_stress_test'].append(item['id'])
+                elif item['dial_status'] in [2, 3] or (item['dial_status'] == 1 and not item['account_ip']):
+                    result['accounts_id_for_dialing'].append(item['id'])
+                elif item['dial_status'] == 0:
+                    result['dialing_accounts'].append(item)
+                elif item['pressure_test_status'] == 1:
+                    result['stress_test_accounts'].append(item)
 
         return result
 
-    def query_category_fault_account(self):
+    def _query_and_category_fault_accounts(self):
         """查询并分类故障账号"""
         fault_accounts_ticket = self.query_fault_accounts()
         # 整理故障单的账号,区分各种状态
@@ -186,7 +192,7 @@ class Baishan(Platform):
             logger.info("白山:执行拨号成功")
             return resp.json()
         else:
-            raise Exception(resp.json()['msg'])
+            raise Exception({"accounts": account_list, "msg": resp.json()['msg']})
 
     def query_fault_server(self) -> dict:
         """查询故障服务器"""
@@ -229,14 +235,14 @@ class Baishan(Platform):
 
     def auto_recover_accounts(self):
         """自动恢复故障"""
-        fault_account_for_processing = self.query_category_fault_account()
+        fault_account_for_processing = self._query_and_category_fault_accounts()
         accounts_id_for_dialing = fault_account_for_processing['accounts_id_for_dialing']
         # 执行拨号
         self.perform_accounts_dialing(accounts_id_for_dialing)
         # 等待10分钟,查看是否还有拨号中的号码,没有后,就进入压测环节
         for _ in range(20):
             time.sleep(30)
-            fault_account_for_processing = self.query_category_fault_account()
+            fault_account_for_processing = self._query_and_category_fault_accounts()
             dialing_accounts = fault_account_for_processing['dialing_accounts']
             if not dialing_accounts:
                 logger.info("白山:拨号完成,开始压测")
@@ -246,7 +252,7 @@ class Baishan(Platform):
         self.perform_accounts_stress_test(fault_account_for_processing['accounts_id_for_stress_test'])
         for _ in range(20):
             time.sleep(30)
-            fault_account_for_processing = self.query_category_fault_account()
+            fault_account_for_processing = self._query_and_category_fault_accounts()
             stress_test_accounts = fault_account_for_processing['stress_test_accounts']
 
             if not stress_test_accounts:
@@ -345,4 +351,4 @@ if __name__ == "__main__":
     logger = setup_logger()
 
     baishan = Baishan("yicheng")
-    baishan.rack_auto_perform_stress_test(2765,ip_type="ipv4")
+    baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
