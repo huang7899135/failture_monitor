@@ -92,18 +92,6 @@ class Baishan(Platform):
             }
         }
 
-        # query_data = {
-        #     "variables": {
-        #         "pagination": {
-        #             "current_page": 1,
-        #             "page_size": 1000
-        #         },
-        #         "multi_search_way": "1",
-        #         "id": "",
-        #         "account_status": [0, 1, 3]
-        #     },
-        #     "query": "query(\n$id:String\n$node_name:String,\n$pagination: commonPageType,\n$fault_type:[Int],\n$supplier_name:String,\n$wechat_group_name:String,\n$start_time:String,\n$node_type:[Int],\n$pressure_test_status:[Int],\n$dial_status:[Int],\n$flow_user_id:[Int],\n$account_status:[Int],\n$fault_status:[Int],\n$claim_status:[Int]\n$host_name:String,\n$multi_search:String,\n$multi_search_way:String,\n){accountFaultList(\nid:$id,\npagination:$pagination,\nflow_user_id:$flow_user_id,\nsupplier_name:$supplier_name,\nwechat_group_name:$wechat_group_name,\nhost_name:$host_name,\npressure_test_status:$pressure_test_status,\ndial_status:$dial_status,\nnode_name:$node_name,\nfault_type:$fault_type,\nstart_time:$start_time,\nnode_type:$node_type,\nstatus:$account_status,\nfault_status:$fault_status\nclaim_status:$claim_status\nmulti_search:$multi_search\nmulti_search_way:$multi_search_way\n){\nid\naccount_id\nsvr_id\nsvr_name\nnode_name\nwechat_group_name\nsupplier_name\ndial_status\nfault_type\nrecover_status\nfault_start_time\nfault_end_time\nlevel\nusername\npwd\nvlan_id\npressure_test_status\ndial_log\npressure_test_log\nrtns_rate\ntcp_in_bw\nmac\nACname\nSCname\nfollower\nmax_limit\naccount_ip\nclaim_status\nplanning_type\ngateway\nnetmask\npush_remark\nfault_status\nfault_status_text\n}\n}\n    \n"
-        # }
         resp = self.fetch(url=self.query_url, json=query_data)
         total_count = resp.headers['x-pagination-total-count']
         current_page = resp.headers['x-pagination-current-page']
@@ -179,10 +167,10 @@ class Baishan(Platform):
             logger.info("白山:没有可以执行压测的账号")
             return {}
         query_data = {
+            "query": "\n    query _($fault_ids: [Int]) {\n        accountInfoById(fault_ids: $fault_ids) {\n            id\n            account_id\n            is_operation\n            recover_status\n            planning_type\n        }\n    }\n   \n",
             "variables": {
-                "ids": account_list
-            },
-            "query": """mutation _ ($ids: [Int] !, $pressure_type: Int) {accountPressureTest(ids: $ids, pressure_type:$pressure_type) {result}}"""
+                "fault_ids": account_list
+            }
         }
         logger.info(f"白山:执行压测共计账号{len(account_list)}个")
         resp = self.fetch(url=self.query_url, json=query_data)
@@ -367,7 +355,8 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    baishan = Baishan("yicheng")
+    # baishan = Baishan("yicheng")
+    baishan = Baishan("vision_blue")
     # 自动拨号
     baishan.auto_recover_accounts()
     # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
