@@ -75,8 +75,8 @@ class Baishan(Platform):
 
     def query_fault_accounts(self) -> dict:
         """查询故障账号,默认1000条"""
-
         query_data = {
+            "query": "\n    query(\n        $id: String $node_name: String,\n        $pagination: commonPageType,\n        $fault_type: [Int],\n        $supplier_name: String,\n        $wechat_group_name: String,\n        $start_time: String,\n        $node_type: [Int],\n        $pressure_test_status: [Int],\n        $dial_status: [Int],\n        $flow_user_id: [Int],\n        $account_status: [Int],\n        $fault_status: [Int],\n        $claim_status: [Int] $host_name: String,\n        $multi_search: String,\n        $multi_search_way: String,\n    ) {\n        accountFaultList(\n            id: $id,\n            pagination: $pagination,\n            flow_user_id: $flow_user_id,\n            supplier_name: $supplier_name,\n            wechat_group_name: $wechat_group_name,\n            host_name: $host_name,\n            pressure_test_status: $pressure_test_status,\n            dial_status: $dial_status,\n            node_name: $node_name,\n            fault_type: $fault_type,\n            start_time: $start_time,\n            node_type: $node_type,\n            status: $account_status,\n            fault_status: $fault_status,\n            claim_status: $claim_status,\n            multi_search: $multi_search,\n            multi_search_way: $multi_search_way\n        ) {\n            id\n            account_id\n            svr_id\n            svr_name\n            node_name\n            ipv4_type\n            ipv6_type\n            net_type\n            ipv6\n            ipv6_pressure_test_status\n            ipv6_retransmission\n            ipv6_tcp_in_bw\n            ipv6_pressure_test_log\n            wechat_group_name\n            supplier_name\n            dial_status\n            fault_type\n            recover_status\n            fault_start_time\n            fault_end_time\n            level\n            username\n            pwd\n            vlan_id\n            pressure_test_status\n            dial_log\n            pressure_test_log\n            rtns_rate\n            tcp_in_bw\n            mac\n            ACname\n            SCname\n            follower\n            max_limit\n            account_ip\n            claim_status\n            planning_type\n            gateway\n            netmask\n            remark\n            push_remark\n            fault_status\n            fault_status_text\n        }\n    }\n    \n",
             "variables": {
                 "pagination": {
                     "current_page": 1,
@@ -84,10 +84,26 @@ class Baishan(Platform):
                 },
                 "multi_search_way": "1",
                 "id": "",
-                "account_status": [0, 1, 3]
-            },
-            "query": "query(\n$id:String\n$node_name:String,\n$pagination: commonPageType,\n$fault_type:[Int],\n$supplier_name:String,\n$wechat_group_name:String,\n$start_time:String,\n$node_type:[Int],\n$pressure_test_status:[Int],\n$dial_status:[Int],\n$flow_user_id:[Int],\n$account_status:[Int],\n$fault_status:[Int],\n$claim_status:[Int]\n$host_name:String,\n$multi_search:String,\n$multi_search_way:String,\n){accountFaultList(\nid:$id,\npagination:$pagination,\nflow_user_id:$flow_user_id,\nsupplier_name:$supplier_name,\nwechat_group_name:$wechat_group_name,\nhost_name:$host_name,\npressure_test_status:$pressure_test_status,\ndial_status:$dial_status,\nnode_name:$node_name,\nfault_type:$fault_type,\nstart_time:$start_time,\nnode_type:$node_type,\nstatus:$account_status,\nfault_status:$fault_status\nclaim_status:$claim_status\nmulti_search:$multi_search\nmulti_search_way:$multi_search_way\n){\nid\naccount_id\nsvr_id\nsvr_name\nnode_name\nwechat_group_name\nsupplier_name\ndial_status\nfault_type\nrecover_status\nfault_start_time\nfault_end_time\nlevel\nusername\npwd\nvlan_id\npressure_test_status\ndial_log\npressure_test_log\nrtns_rate\ntcp_in_bw\nmac\nACname\nSCname\nfollower\nmax_limit\naccount_ip\nclaim_status\nplanning_type\ngateway\nnetmask\npush_remark\nfault_status\nfault_status_text\n}\n}\n    \n"
+                "account_status": [
+                    0,
+                    1,
+                    3
+                ]
+            }
         }
+
+        # query_data = {
+        #     "variables": {
+        #         "pagination": {
+        #             "current_page": 1,
+        #             "page_size": 1000
+        #         },
+        #         "multi_search_way": "1",
+        #         "id": "",
+        #         "account_status": [0, 1, 3]
+        #     },
+        #     "query": "query(\n$id:String\n$node_name:String,\n$pagination: commonPageType,\n$fault_type:[Int],\n$supplier_name:String,\n$wechat_group_name:String,\n$start_time:String,\n$node_type:[Int],\n$pressure_test_status:[Int],\n$dial_status:[Int],\n$flow_user_id:[Int],\n$account_status:[Int],\n$fault_status:[Int],\n$claim_status:[Int]\n$host_name:String,\n$multi_search:String,\n$multi_search_way:String,\n){accountFaultList(\nid:$id,\npagination:$pagination,\nflow_user_id:$flow_user_id,\nsupplier_name:$supplier_name,\nwechat_group_name:$wechat_group_name,\nhost_name:$host_name,\npressure_test_status:$pressure_test_status,\ndial_status:$dial_status,\nnode_name:$node_name,\nfault_type:$fault_type,\nstart_time:$start_time,\nnode_type:$node_type,\nstatus:$account_status,\nfault_status:$fault_status\nclaim_status:$claim_status\nmulti_search:$multi_search\nmulti_search_way:$multi_search_way\n){\nid\naccount_id\nsvr_id\nsvr_name\nnode_name\nwechat_group_name\nsupplier_name\ndial_status\nfault_type\nrecover_status\nfault_start_time\nfault_end_time\nlevel\nusername\npwd\nvlan_id\npressure_test_status\ndial_log\npressure_test_log\nrtns_rate\ntcp_in_bw\nmac\nACname\nSCname\nfollower\nmax_limit\naccount_ip\nclaim_status\nplanning_type\ngateway\nnetmask\npush_remark\nfault_status\nfault_status_text\n}\n}\n    \n"
+        # }
         resp = self.fetch(url=self.query_url, json=query_data)
         total_count = resp.headers['x-pagination-total-count']
         current_page = resp.headers['x-pagination-current-page']
@@ -135,11 +151,14 @@ class Baishan(Platform):
         }
         logger.debug(f"白山:故障记录数量{len(data)}")
         for item in data:
+            import pprint
+            pprint.pprint(item)
             logger.debug(item)
             if item['planning_type'] == "static":
                 result['accounts_id_for_stress_test'].append(item['id'])
             else:
-                if item['dial_status'] == 1 and item['account_ip'] and item['ipv6'] and item['pressure_test_status'] in [0, 3]:
+                if item['dial_status'] == 1 and item['account_ip'] and item['ipv6'] and item[
+                    'pressure_test_status'] in [0, 3]:
                     result['accounts_id_for_stress_test'].append(item['id'])
                 elif item['dial_status'] in [2, 3] or (item['dial_status'] == 1 and not item['account_ip']):
                     result['accounts_id_for_dialing'].append(item['id'])
@@ -351,4 +370,6 @@ if __name__ == "__main__":
     logger = setup_logger()
 
     baishan = Baishan("yicheng")
-    baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
+    # 自动拨号
+    baishan.auto_recover_accounts()
+    # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
