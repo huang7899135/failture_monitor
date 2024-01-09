@@ -15,7 +15,7 @@ class Platform(ABC):
         self.platform_name = self.__class__.__name__.lower()
         # 动态获取session_file_path,当前路径的上一级目录的sessions目录
         self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), f"sessions/{self.platform_name}")
-        self.session = self.load_session()
+        self.session = None
         self.login_info = self.__load_config()["login_info"][self.platform_name]
         self.username = self.login_info["username"]
         self.password = self.login_info["password"]
@@ -32,37 +32,40 @@ class Platform(ABC):
             return json.load(f)
 
     @abstractmethod
-    def login(self, *args, **kwargs):
+    def _login(self, *args, **kwargs):
         raise NotImplementedError
 
-    def logout(self, *args, **kwargs):
+    def _logout(self, *args, **kwargs):
         raise NotImplementedError
 
-    def fetch(self, *args, **kwargs):
+    def _fetch(self, *args, **kwargs):
         """加载本地session,如果失败就从新登录"""
         if not self.session:
             logger.info("加载本地session失败,从新登录")
-            self.login()
+            self._login()
         resp = self.session.post(*args, **kwargs, verify=False)
         logger.debug(f"fetch status_code:{resp.status_code}")
         if self.session_is_unexpected(resp):
             logger.info("session异常,重新登录")
-            self.login()
+            self._login()
             resp = self.session.post(*args, **kwargs, verify=False)
         return resp
 
-    def retrieve(self, *args, **kwargs):
+    def _retrieve(self, *args, **kwargs):
         """自定义get请求方法,如果请求失败,则重新登录"""
         if not self.session:
             logger.info("加载本地session失败,从新登录")
-            self.login()
+            self._login()
         resp = self.session.get(*args, **kwargs, verify=False)
         logger.debug(f"fetch status_code:{resp.status_code}")
         if self.session_is_unexpected(resp):
             logger.info("session异常,重新登录")
-            self.login()
+            self._login()
             resp = self.session.get(*args, **kwargs, verify=False)
         return resp
+
+    def init(self):
+        self.session = self.load_session()
 
     def before_login(self):
         """

@@ -23,6 +23,7 @@ if __name__ == "__main__":
     # yicheng = Baishan("yicheng")
     # yicheng.auto_recover_accounts()
     vision_blue = Baishan("vision_blue")
+    vision_blue.init()
     vision_blue.auto_recover_accounts()
 
     # baishan = Baishan("vision_blue")

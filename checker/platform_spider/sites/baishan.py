@@ -11,13 +11,13 @@ class Baishan(Platform):
         assert supplier in ["vision_blue", "yicheng"], "只有vision_blue or yicheng "
         logger.info(f"白山:{supplier}初始化中...")
         self.login_supplier = supplier
+        super().__init__()
         self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                               f"sessions/baishan_{supplier}")
-        super().__init__()
         self.query_url = "https://service-luohan.bs58i.baishancloud.com/agent/graphql/query"
         self.suppliers = self.login_info["suppliers"]
 
-    def _login(self, supplier_id: int = 1355) -> None:
+    def perform_login(self, supplier_id: int = 1355) -> None:
         """因为白山有2个公司主体,所以需要登录2次,分别获取2个公司的token"""
         self.before_login()
         login_url = "https://service-luohan-auth.bs58i.baishancdnx.com/login"
@@ -54,23 +54,23 @@ class Baishan(Platform):
                 raise Exception(login_resp.json()['msg'])
 
         else:
-            logger.error(f"白山:{login_resp.json()['msg']}")
+            logger.error(f"白山<{self.login_supplier}>:{login_resp.json()['msg']}")
             raise Exception(login_resp.json()['msg'])
 
-    def login(self):
+    def _login(self):
         supplier_id = self.suppliers.get(self.login_supplier).get("supplier_id")
-        self._login(supplier_id)
+        self.perform_login(supplier_id)
 
-    def logout(self):
+    def _logout(self):
         data = {
             "query": "{logout {result}}\n"
         }
-        self.fetch(self.query_url, json=data)
+        self._fetch(self.query_url, json=data)
 
     def session_is_unexpected(self, resp):
         super().session_is_unexpected(resp)
         if resp.json()['code'] == 401:
-            logger.warning("白山:登录过期,重新登录")
+            logger.warning(f"白山<{self.login_supplier}>:登录过期,重新登录")
             return True
 
     def query_fault_accounts(self) -> dict:
@@ -92,7 +92,7 @@ class Baishan(Platform):
             }
         }
 
-        resp = self.fetch(url=self.query_url, json=query_data)
+        resp = self._fetch(url=self.query_url, json=query_data)
         total_count = resp.headers['x-pagination-total-count']
         current_page = resp.headers['x-pagination-current-page']
         page_count = resp.headers['x-pagination-page-count']
@@ -108,8 +108,7 @@ class Baishan(Platform):
         # logger.debug(account_fault_list)
         return data
 
-    @staticmethod
-    def identify_account_status(data: list) -> dict:
+    def identify_account_status(self, data: list) -> dict:
         """整理可以拨号和压测的账号
         dial_status拨号状态:
         0 -->拨号中
@@ -137,7 +136,7 @@ class Baishan(Platform):
             "dialing_accounts": [],
             "stress_test_accounts": []
         }
-        logger.debug(f"白山:故障记录数量{len(data)}")
+        logger.debug(f"白山<{self.login_supplier}>:故障记录数量{len(data)}")
         for item in data:
             logger.debug(item)
             if item['planning_type'] == "static":
@@ -164,18 +163,25 @@ class Baishan(Platform):
     def perform_accounts_stress_test(self, account_list: list) -> dict:
         """执行宽带压测"""
         if not account_list:
-            logger.info("白山:没有可以执行压测的账号")
+            logger.info(f"白山<{self.login_supplier}>:没有可以执行压测的账号")
             return {}
         query_data = {
-            "query": "\n    query _($fault_ids: [Int]) {\n        accountInfoById(fault_ids: $fault_ids) {\n            id\n            account_id\n            is_operation\n            recover_status\n            planning_type\n        }\n    }\n   \n",
+            "query": "mutation _ ($ids: [Int] !, $pressure_type: Int) {\n        accountPressureTest(ids: $ids, pressure_type:$pressure_type) {\n            result\n        }\n    }\n",
             "variables": {
-                "fault_ids": account_list
+                "ids": account_list,
             }
         }
-        logger.info(f"白山:执行压测共计账号{len(account_list)}个")
-        resp = self.fetch(url=self.query_url, json=query_data)
+
+        # query_data = {
+        #     "query": "\n    query _($fault_ids: [Int]) {\n        accountInfoById(fault_ids: $fault_ids) {\n            id\n            account_id\n            is_operation\n            recover_status\n            planning_type\n        }\n    }\n   \n",
+        #     "variables": {
+        #         "fault_ids": account_list
+        #     }
+        # }
+        logger.info(f"白山<{self.login_supplier}>:执行压测共计账号{len(account_list)}个")
+        resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
-            logger.info("白山:宽带测速提交成功")
+            logger.info(f"白山<{self.login_supplier}>:宽带测速提交成功")
             return resp.json()
         else:
             raise Exception(resp.json()['msg'])
@@ -183,7 +189,7 @@ class Baishan(Platform):
     def perform_accounts_dialing(self, account_list: list) -> dict:
         """执行拨号"""
         if not account_list:
-            logger.warning("白山:没有可以执行拨号的账号")
+            logger.warning(f"白山<{self.login_supplier}>:没有可以执行拨号的账号")
             return {}
         query_data = {
             "variables": {
@@ -191,10 +197,10 @@ class Baishan(Platform):
             },
             "query": "mutation _ ($fault_account_ids: [Int!]) {accountDial(fault_account_ids: $fault_account_ids) {result}}"
         }
-        logger.info(f"白山:执行拨号共计账号{len(account_list)}个")
-        resp = self.fetch(url=self.query_url, json=query_data)
+        logger.info(f"白山<{self.login_supplier}>:执行拨号共计账号{len(account_list)}个")
+        resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
-            logger.info("白山:执行拨号成功")
+            logger.info(f"白山<{self.login_supplier}>:执行拨号成功")
             return resp.json()
         else:
             raise Exception({"accounts": account_list, "msg": resp.json()['msg']})
@@ -213,7 +219,7 @@ class Baishan(Platform):
                 "server_status": [0, 1, 3]
             }
         }
-        resp = self.fetch(url=self.query_url, json=query_data)
+        resp = self._fetch(url=self.query_url, json=query_data)
         # logger.debug(resp.json())
         if resp.json()['code'] == 0:
             return resp.json()['data']['faultSvrList']
@@ -232,7 +238,7 @@ class Baishan(Platform):
                 "id": ""
             }
         }
-        resp = self.fetch(url=self.query_url, json=query_data)
+        resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
             return resp.json()['data']['faultNodeList']
         else:
@@ -250,9 +256,9 @@ class Baishan(Platform):
             fault_account_for_processing = self._query_and_category_fault_accounts()
             dialing_accounts = fault_account_for_processing['dialing_accounts']
             if not dialing_accounts:
-                logger.info("白山:拨号完成,开始压测")
+                logger.info(f"白山<{self.login_supplier}>:拨号完成,开始压测")
                 break
-            logger.debug("白山:等待拨号完成")
+            logger.debug(f"白山<{self.login_supplier}>:等待拨号完成")
 
         self.perform_accounts_stress_test(fault_account_for_processing['accounts_id_for_stress_test'])
         for _ in range(20):
@@ -261,9 +267,9 @@ class Baishan(Platform):
             stress_test_accounts = fault_account_for_processing['stress_test_accounts']
 
             if not stress_test_accounts:
-                logger.info("白山:压测完成")
+                logger.info(f"白山<{self.login_supplier}>:压测完成")
                 break
-            logger.debug("白山:等待压测完成")
+            logger.debug(f"白山<{self.login_supplier}>:等待压测完成")
 
         return self.query_fault_accounts()['account_fault_list']
 
@@ -281,9 +287,9 @@ class Baishan(Platform):
             }
 
         }
-        resp = self.fetch(url=self.query_url, json=query_data)
+        resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
-            logger.info(f"白山:机柜{ip_type}压测提交成功")
+            logger.info(f"白山<{self.login_supplier}>:机柜{ip_type}压测提交成功")
             return resp.json()
         else:
             raise Exception(resp.json()['msg'])
@@ -311,7 +317,7 @@ class Baishan(Platform):
                 "next_status": 0
             }
         }
-        resp = self.fetch(url=self.query_url, json=query_data)
+        resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
             return resp.json()
         else:
@@ -331,20 +337,20 @@ class Baishan(Platform):
                                     result['data']['bscResourceMachineInfoQuery']]
             # 如果有机柜正在压测中,则等待
             if 320018 in stress_test_info:
-                logger.info(f"白山:机柜{ip_type}压测中")
+                logger.info(f"<{self.suppliers}>机柜{ip_type}压测中")
                 time.sleep(wait_time)
             # 如果有机柜压测失败,则提交压测,并等待
             elif 320020 in stress_test_info or 0 in stress_test_info:
-                logger.info(f"白山:机柜{ip_type}压测失败,提交压测")
+                logger.info(f"白山<{self.login_supplier}>:机柜{ip_type}压测失败,提交压测")
                 self.perform_server_rack_stress_test(p_id, ip_type=ip_type)
                 time.sleep(wait_time)
             # 如果所有机柜压测成功,则退出
             elif all([item == 320019 for item in stress_test_info]):
-                logger.info(f"白山:机柜{ip_type}压测成功,共计执行了{times}次")
+                logger.info(f"白山<{self.login_supplier}>:机柜{ip_type}压测成功,共计执行了{times}次")
                 return
             else:
                 logger.error(f"白山压测状态码为:{stress_test_info}")
-        logger.error(f"白山:机柜{ip_type}压测失败")
+        logger.error(f"白山<{self.login_supplier}>:机柜{ip_type}压测失败")
 
 
 if __name__ == "__main__":
@@ -355,8 +361,9 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    # baishan = Baishan("yicheng")
-    baishan = Baishan("vision_blue")
+    baishan = Baishan("yicheng")
+    baishan.init()
+    # baishan = Baishan("vision_blue")
     # 自动拨号
     baishan.auto_recover_accounts()
     # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")

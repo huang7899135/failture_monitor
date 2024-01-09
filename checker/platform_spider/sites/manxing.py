@@ -21,7 +21,7 @@ class ManXing(Platform):
         if resp.json()['code'] == -2:
             return True
 
-    def login(self):
+    def _login(self):
         self.before_login()
         url = "https://service.chxyun.cn/client/user/login"
         data = {
@@ -41,7 +41,7 @@ class ManXing(Platform):
             logger.error(f"漫星:{resp.json()['msg']}")
             raise Exception(resp.json()['msg'])
 
-    def logout(self):
+    def _logout(self):
         pass
 
     def query_server_status(self):
@@ -53,7 +53,7 @@ class ManXing(Platform):
             "page": 1,
             "pageSize": 100
         }
-        resp = self.fetch(url=self.query_url, json=data)
+        resp = self._fetch(url=self.query_url, json=data)
         logger.debug(resp.json())
         return resp.json()
 
@@ -62,7 +62,7 @@ class ManXing(Platform):
         data = {
             "id": server_id
         }
-        resp = self.fetch(url=url, json=data)
+        resp = self._fetch(url=url, json=data)
         account_list = resp.json()['data']['gather']['dial']
         logger.debug(account_list)
         return account_list

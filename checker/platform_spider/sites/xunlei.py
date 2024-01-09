@@ -9,7 +9,7 @@ class XunLei(Platform):
         super().__init__()
         pass
 
-    def login(self):
+    def _login(self):
         self.before_login()
         url = 'https://console.snodehome.cn/api/auth/login'
         data = {
@@ -30,14 +30,14 @@ class XunLei(Platform):
             logger.error(f"迅雷:{resp.json()['msg']}")
             raise Exception(resp.json()['msg'])
 
-    def logout(self):
+    def _logout(self):
         url = 'https://console.snodehome.cn/api/auth/logout'
         self.session.get(url=url)
 
     def query_server_status(self):
         """查询服务器状态"""
         url = "https://console.snodehome.cn/api/miner_manage/miner/minerList"
-        resp = self.retrieve(url=url)
+        resp = self._retrieve(url=url)
         if resp.json()['code'] == 0:
             ret = resp.json()['data']['list']
             return self.identify_server_status(ret)
@@ -57,7 +57,7 @@ class XunLei(Platform):
     def generate_web_url(self, device_id):
         """根据device_id生成控制台url"""
         url = f"https://console.snodehome.cn/api/miner_manage/miner/generateWebUrl?device_id={device_id}"
-        resp = self.retrieve(url=url)
+        resp = self._retrieve(url=url)
         if resp.json()['code'] == 0:
 
             return resp.json()['data']['url']
