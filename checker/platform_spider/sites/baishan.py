@@ -151,8 +151,6 @@ class Baishan(Platform):
         }
         logger.debug(f"白山:故障记录数量{len(data)}")
         for item in data:
-            import pprint
-            pprint.pprint(item)
             logger.debug(item)
             if item['planning_type'] == "static":
                 result['accounts_id_for_stress_test'].append(item['id'])
