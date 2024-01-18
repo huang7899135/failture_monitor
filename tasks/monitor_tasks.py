@@ -19,11 +19,11 @@ def yicheng_auto_recover_accounts():
     """白山自动恢复账号故障"""
     yicheng = Baishan("yicheng")
     yicheng.init()
-    yicheng.auto_recover_accounts()
+    yicheng.auto_recover_accounts_in_account_failure()
 
 
 @app.task
 def vision_blue_auto_recover_accounts():
     vision_blue = Baishan("vision_blue")
     vision_blue.init()
-    vision_blue.auto_recover_accounts()
+    vision_blue.auto_recover_accounts_in_account_failure()
