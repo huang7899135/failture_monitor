@@ -17,7 +17,6 @@
           "srm_sub_account": ""
         }
       }
-
     },
     "manxing": {
       "username": "13348936614",
@@ -25,6 +24,10 @@
     },
     "xunlei": {
       "username": "21993641",
+      "password": "xs123456"
+    },
+    "openfog": {
+      "username": "sjl",
       "password": "xs123456"
     }
   }

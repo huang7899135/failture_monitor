@@ -74,6 +74,7 @@ class Platform(ABC):
         """
         self.session = requests.Session()
         self.session.headers['Content-Type'] = 'application/json'
+        self.session.verify = False
 
     def after_login(self):
         """登录成功后,修改登录状态,并保行保存session的工作"""
