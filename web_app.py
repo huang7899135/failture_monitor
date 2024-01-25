@@ -95,9 +95,9 @@ def user_notify_frequency():
         next_notify_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
         current_time = datetime.now().astimezone(pytz.timezone('Asia/Shanghai'))
 
-        logger.info("format_next_notify_time", next_notify_time)
-        logger.info("current_time", current_time)
-        logger.info("next_notify_time < current_time:", next_notify_time < current_time)
+        logger.info(f"format_next_notify_time{next_notify_time}")
+        logger.info(f"current_time{current_time}")
+        logger.info(f"next_notify_time < current_time:{next_notify_time < current_time}")
         if next_notify_time < current_time:
             return {"code": 1, "msg": "next_notify_time不能小于当前时间"}
 
