@@ -62,7 +62,6 @@ class Openfog(Platform):
 if __name__ == "__main__":
     import os
     from utils.logger import setup_logger
-
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 

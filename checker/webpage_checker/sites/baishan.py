@@ -76,7 +76,32 @@ class Baishan(Platform):
     def query_faulty_accounts(self) -> dict:
         """查询故障账号,默认1000条"""
         query_data = {
-            "query": "\n    query(\n        $id: String $node_name: String,\n        $pagination: commonPageType,\n        $fault_type: [Int],\n        $supplier_name: String,\n        $wechat_group_name: String,\n        $start_time: String,\n        $node_type: [Int],\n        $pressure_test_status: [Int],\n        $dial_status: [Int],\n        $flow_user_id: [Int],\n        $account_status: [Int],\n        $fault_status: [Int],\n        $claim_status: [Int] $host_name: String,\n        $multi_search: String,\n        $multi_search_way: String,\n    ) {\n        accountFaultList(\n            id: $id,\n            pagination: $pagination,\n            flow_user_id: $flow_user_id,\n            supplier_name: $supplier_name,\n            wechat_group_name: $wechat_group_name,\n            host_name: $host_name,\n            pressure_test_status: $pressure_test_status,\n            dial_status: $dial_status,\n            node_name: $node_name,\n            fault_type: $fault_type,\n            start_time: $start_time,\n            node_type: $node_type,\n            status: $account_status,\n            fault_status: $fault_status,\n            claim_status: $claim_status,\n            multi_search: $multi_search,\n            multi_search_way: $multi_search_way\n        ) {\n            id\n            account_id\n            svr_id\n            svr_name\n            node_name\n            ipv4_type\n            ipv6_type\n            net_type\n            ipv6\n            ipv6_pressure_test_status\n            ipv6_retransmission\n            ipv6_tcp_in_bw\n            ipv6_pressure_test_log\n            wechat_group_name\n            supplier_name\n            dial_status\n            fault_type\n            recover_status\n            fault_start_time\n            fault_end_time\n            level\n            username\n            pwd\n            vlan_id\n            pressure_test_status\n            dial_log\n            pressure_test_log\n            rtns_rate\n            tcp_in_bw\n            mac\n            ACname\n            SCname\n            follower\n            max_limit\n            account_ip\n            claim_status\n            planning_type\n            gateway\n            netmask\n            remark\n            push_remark\n            fault_status\n            fault_status_text\n        }\n    }\n    \n",
+            "query": "\n    query(\n        $id: String $node_name: String,\n        $pagination: commonPageType,"
+                     "\n        $fault_type: [Int],\n        $supplier_name: String,\n        $wechat_group_name: "
+                     "String,\n        $start_time: String,\n        $node_type: [Int],\n        "
+                     "$pressure_test_status: [Int],\n        $dial_status: [Int],\n        $flow_user_id: [Int],"
+                     "\n        $account_status: [Int],\n        $fault_status: [Int],\n        $claim_status: [Int] "
+                     "$host_name: String,\n        $multi_search: String,\n        $multi_search_way: String,"
+                     "\n    ) {\n        accountFaultList(\n            id: $id,\n            pagination: "
+                     "$pagination,\n            flow_user_id: $flow_user_id,\n            supplier_name: "
+                     "$supplier_name,\n            wechat_group_name: $wechat_group_name,\n            host_name: "
+                     "$host_name,\n            pressure_test_status: $pressure_test_status,\n            dial_status: "
+                     "$dial_status,\n            node_name: $node_name,\n            fault_type: $fault_type,"
+                     "\n            start_time: $start_time,\n            node_type: $node_type,\n            status: "
+                     "$account_status,\n            fault_status: $fault_status,\n            claim_status: "
+                     "$claim_status,\n            multi_search: $multi_search,\n            multi_search_way: "
+                     "$multi_search_way\n        ) {\n            id\n            account_id\n            svr_id\n    "
+                     "        svr_name\n            node_name\n            ipv4_type\n            ipv6_type\n         "
+                     "   net_type\n            ipv6\n            ipv6_pressure_test_status\n            "
+                     "ipv6_retransmission\n            ipv6_tcp_in_bw\n            ipv6_pressure_test_log\n           "
+                     " wechat_group_name\n            supplier_name\n            dial_status\n            "
+                     "fault_type\n            recover_status\n            fault_start_time\n            "
+                     "fault_end_time\n            level\n            username\n            pwd\n            vlan_id\n "
+                     "           pressure_test_status\n            dial_log\n            pressure_test_log\n          "
+                     "  rtns_rate\n            tcp_in_bw\n            mac\n            ACname\n            SCname\n   "
+                     "         follower\n            max_limit\n            account_ip\n            claim_status\n    "
+                     "        planning_type\n            gateway\n            netmask\n            remark\n           "
+                     " push_remark\n            fault_status\n            fault_status_text\n        }\n    }\n    \n",
             "variables": {
                 "pagination": {
                     "current_page": 1,
@@ -142,7 +167,8 @@ class Baishan(Platform):
             if item['planning_type'] == "static":
                 result['accounts_id_for_stress_test'].append(item['id'])
             else:
-                if item['dial_status'] == 1 and item['account_ip'] and item['ipv6'] and item['pressure_test_status'] in [0, 3]:
+                if (item['dial_status'] == 1 and item['account_ip'] and item['ipv6'] and item['pressure_test_status'] in
+                        [0, 3]):
                     result['accounts_id_for_stress_test'].append(item['id'])
                 elif item['dial_status'] in [2, 3] or (item['dial_status'] == 1 and not item['account_ip']):
                     result['accounts_id_for_dialing'].append(item['id'])
@@ -179,7 +205,8 @@ class Baishan(Platform):
             logger.info(f"白山<{self.login_supplier}>:没有可以执行压测的账号")
             return {}
         query_data = {
-            "query": "mutation _ ($ids: [Int] !, $pressure_type: Int) {\n        accountPressureTest(ids: $ids, pressure_type:$pressure_type) {\n            result\n        }\n    }\n",
+            "query": "mutation _ ($ids: [Int] !, $pressure_type: Int) {\n        accountPressureTest(ids: $ids, "
+                     "pressure_type:$pressure_type) {\n            result\n        }\n    }\n",
             "variables": {
                 "ids": account_list,
             }
@@ -201,7 +228,8 @@ class Baishan(Platform):
             "variables": {
                 "fault_account_ids": account_list
             },
-            "query": "mutation _ ($fault_account_ids: [Int!]) {accountDial(fault_account_ids: $fault_account_ids) {result}}"
+            "query": "mutation _ ($fault_account_ids: [Int!]) {accountDial(fault_account_ids: $fault_account_ids) {"
+                     "result}}"
         }
         logger.info(f"白山<{self.login_supplier}>:执行拨号共计账号{len(account_list)}个")
         resp = self._fetch(url=self.query_url, json=query_data)
@@ -214,7 +242,20 @@ class Baishan(Platform):
     def query_faulty_servers(self) -> dict:
         """查询故障服务器"""
         query_data = {
-            "query": "query($id: String $node_name: String,$push_fault_type: [Int],$hostname: String,$start_time: String,$end_time: String,$pagination: commonPageType,$supplier_name: String,$wechat_group_name: String,$server_status: [Int],$check_status: [Int],$follower: [Int],$claim_status: [Int],$multi_search: String,$multi_search_way: String) {faultSvrList(id: $id node_name: $node_name,push_fault_type: $push_fault_type,hostname: $hostname,start_time: $start_time,end_time: $end_time,supplier_name: $supplier_name,wechat_group_name: $wechat_group_name,status: $server_status,check_status: $check_status,follower: $follower,pagination: $pagination,claim_status: $claim_status,multi_search: $multi_search,multi_search_way: $multi_search_way) {id svr_id node_id  hostname account_num  node_name  priority push_fault_type fault_desc follower_name accountability fault_start_time fault_end_time claim_status status check_status bandwidth  port ip  sn  wechat_group_name supplier_name  is_power_off is_reinstall is_can_recover  is_baishan_server is_replace_hard_disk recover_apply_remark recover_remark small_check feed_log_op_user log_create_at  log  check {  id name  ename check_status  check_log } } }",
+            "query": "query($id: String $node_name: String,$push_fault_type: [Int],$hostname: String,$start_time: "
+                     "String,$end_time: String,$pagination: commonPageType,$supplier_name: String,$wechat_group_name: "
+                     "String,$server_status: [Int],$check_status: [Int],$follower: [Int],$claim_status: [Int],"
+                     "$multi_search: String,$multi_search_way: String) {faultSvrList(id: $id node_name: $node_name,"
+                     "push_fault_type: $push_fault_type,hostname: $hostname,start_time: $start_time,end_time: "
+                     "$end_time,supplier_name: $supplier_name,wechat_group_name: $wechat_group_name,"
+                     "status: $server_status,check_status: $check_status,follower: $follower,pagination: $pagination,"
+                     "claim_status: $claim_status,multi_search: $multi_search,multi_search_way: $multi_search_way) {"
+                     "id svr_id node_id  hostname account_num  node_name  priority push_fault_type fault_desc "
+                     "follower_name accountability fault_start_time fault_end_time claim_status status check_status "
+                     "bandwidth  port ip  sn  wechat_group_name supplier_name  is_power_off is_reinstall "
+                     "is_can_recover  is_baishan_server is_replace_hard_disk recover_apply_remark recover_remark "
+                     "small_check feed_log_op_user log_create_at  log  check {  id name  ename check_status  "
+                     "check_log } } }",
             "variables": {
                 "pagination": {
                     "current_page": 1,
@@ -235,7 +276,27 @@ class Baishan(Platform):
     def query_faulty_nodes(self) -> dict:
         """查询故障节点,主要查询字段为故障节点的id,即node_feedback_id"""
         query_data = {
-            "query": "\n    query(\n        $id: String $node_name: String,\n        $fault_type: [Int],\n        $wechat_group_name: String,\n        $supplier_name: String,\n        $fault_granularity: Int,\n        $start_time: String,\n        $start_time_end: String,\n        $end_time: String,\n        $end_time_end: String,\n        $node_type: [Int],\n        $node_status: [Int],\n        $flow_user_id: [Int],\n        $pagination: commonPageType,\n    ) {\n        faultNodeList(\n            id: $id,\n            wechat_group_name: $wechat_group_name,\n            supplier_name: $supplier_name,\n            node_name: $node_name,\n            flow_user_id: $flow_user_id,\n            fault_type: $fault_type,\n            fault_granularity: $fault_granularity,\n            start_time: $start_time,\n            start_time_end: $start_time_end,\n            end_time: $end_time,\n            end_time_end: $end_time_end,\n            node_type: $node_type,\n            status: $node_status,\n            pagination: $pagination\n        ) {\n            id\n            name\n            node_type\n            fault_type\n            fault_reason\n            status\n            fault_time\n            wechat_group_name\n            fault_owner\n            flow_user_id\n            flow_user_name\n            supplier_id\n            supplier_name\n            priority\n            describe\n            claim_status\n            create_time\n            end_time\n            cutover_id\n            isp_names\n            cutover_way_text\n            cutover_way\n            fault_type_text\n            countSvr\n            checkSvr\n            account_count\n            feed_log_op_user\n            log_create_at\n            log\n            apply_fault_reason\n            apply_fault_remark\n            apply_recover_remark\n        }\n    }\n    \n",
+            "query": "\n    query(\n        $id: String $node_name: String,\n        $fault_type: [Int],\n        "
+                     "$wechat_group_name: String,\n        $supplier_name: String,\n        $fault_granularity: Int,"
+                     "\n        $start_time: String,\n        $start_time_end: String,\n        $end_time: String,"
+                     "\n        $end_time_end: String,\n        $node_type: [Int],\n        $node_status: [Int],"
+                     "\n        $flow_user_id: [Int],\n        $pagination: commonPageType,\n    ) {\n        "
+                     "faultNodeList(\n            id: $id,\n            wechat_group_name: $wechat_group_name,"
+                     "\n            supplier_name: $supplier_name,\n            node_name: $node_name,\n            "
+                     "flow_user_id: $flow_user_id,\n            fault_type: $fault_type,\n            "
+                     "fault_granularity: $fault_granularity,\n            start_time: $start_time,\n            "
+                     "start_time_end: $start_time_end,\n            end_time: $end_time,\n            end_time_end: "
+                     "$end_time_end,\n            node_type: $node_type,\n            status: $node_status,"
+                     "\n            pagination: $pagination\n        ) {\n            id\n            name\n          "
+                     "  node_type\n            fault_type\n            fault_reason\n            status\n            "
+                     "fault_time\n            wechat_group_name\n            fault_owner\n            flow_user_id\n  "
+                     "          flow_user_name\n            supplier_id\n            supplier_name\n            "
+                     "priority\n            describe\n            claim_status\n            create_time\n            "
+                     "end_time\n            cutover_id\n            isp_names\n            cutover_way_text\n         "
+                     "   cutover_way\n            fault_type_text\n            countSvr\n            checkSvr\n       "
+                     "     account_count\n            feed_log_op_user\n            log_create_at\n            log\n  "
+                     "          apply_fault_reason\n            apply_fault_remark\n            "
+                     "apply_recover_remark\n        }\n    }\n    \n",
             "variables": {
                 "pagination": {
                     "current_page": 1,
@@ -254,7 +315,24 @@ class Baishan(Platform):
     def query_faulty_servers_in_node_failure(self, node_feedback_id: int) -> dict:
         """查询故障节点下的故障服务器"""
         query_data = {
-            "query": "\n    query (\n        $fault_receipt_id: Int\n        $check_status: [Int]\n        $status: [Int]\n        $fault_status: [Int]\n        $multi_search: String\n        $multi_search_way: Int\n        $pagination: commonPageType\n    ) {\n        faultNodeSvrList(\n            fault_receipt_id: $fault_receipt_id\n            check_status: $check_status\n            status: $status\n            multi_search: $multi_search\n            multi_search_way: $multi_search_way\n            fault_status: $fault_status\n            pagination: $pagination\n        ) {\n            id\n            svr_id\n            node_id\n            hostname\n            node_feedback_id\n            account_num\n            node_name\n            priority\n            push_fault_type\n            fault_desc\n            follower_name\n            accountability\n            fault_start_time\n            fault_end_time\n            claim_status\n            status\n            check_status\n            bandwidth\n            port\n            ip\n            sn\n            wechat_group_name\n            supplier_name\n            check_log\n            is_power_off\n            is_reinstall\n            is_can_recover\n            is_baishan_server\n            is_replace_hard_disk\n            recover_apply_remark\n            recover_remark\n            fault_status\n            fault_status_text\n            small_check\n            feed_log_op_user\n            log_create_at\n            log\n            check {\n                id\n                name\n                ename\n            }\n        }\n    }\n    \n    \n",
+            "query": "\n    query (\n        $fault_receipt_id: Int\n        $check_status: [Int]\n        $status: ["
+                     "Int]\n        $fault_status: [Int]\n        $multi_search: String\n        $multi_search_way: "
+                     "Int\n        $pagination: commonPageType\n    ) {\n        faultNodeSvrList(\n            "
+                     "fault_receipt_id: $fault_receipt_id\n            check_status: $check_status\n            "
+                     "status: $status\n            multi_search: $multi_search\n            multi_search_way: "
+                     "$multi_search_way\n            fault_status: $fault_status\n            pagination: "
+                     "$pagination\n        ) {\n            id\n            svr_id\n            node_id\n            "
+                     "hostname\n            node_feedback_id\n            account_num\n            node_name\n        "
+                     "    priority\n            push_fault_type\n            fault_desc\n            follower_name\n  "
+                     "          accountability\n            fault_start_time\n            fault_end_time\n            "
+                     "claim_status\n            status\n            check_status\n            bandwidth\n            "
+                     "port\n            ip\n            sn\n            wechat_group_name\n            "
+                     "supplier_name\n            check_log\n            is_power_off\n            is_reinstall\n      "
+                     "      is_can_recover\n            is_baishan_server\n            is_replace_hard_disk\n         "
+                     "   recover_apply_remark\n            recover_remark\n            fault_status\n            "
+                     "fault_status_text\n            small_check\n            feed_log_op_user\n            "
+                     "log_create_at\n            log\n            check {\n                id\n                name\n "
+                     "               ename\n            }\n        }\n    }\n    \n    \n",
             "variables": {
                 "pagination": {
                     "current_page": 1,
@@ -270,16 +348,15 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def _identify_server_status(self, data: list) -> dict:
+    @staticmethod
+    def check_recovery_conditions_in_node_failure(data: list) -> bool:
         """
-        TODO:整理故障服务器的状态,区分各种状态
         检查list的item里面的check_status是否等于1,如果等于1就是检测合格了,如果主要item的check_status等于1的数量大于list的60%,就满足恢复条件
         :param data:
         :return:
         """
         is_checked_servers = list(filter(lambda x: x['check_status'] == 1, data))
-        is_meet_quantity_requirement = len(is_checked_servers) / len(data) >= 0.6
-        pass
+        return len(is_checked_servers) / len(data) >= 0.6
 
     def perform_connectivity_check_in_node_failure(self, faulty_server_id_list: list) -> dict:
         """执行连通性检测"""
@@ -427,6 +504,37 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
+    def auto_recover_node_in_node_failure(self) -> None:
+        """
+        自动恢复节点
+        :return:
+        """
+        # 1,查询故障节点
+        faulty_nodes = self.query_faulty_nodes()
+        # 2,遍历故障节点
+        for node in faulty_nodes:
+            # 3,查询故障节点下的故障服务器
+            faulty_servers = self.query_faulty_servers_in_node_failure(node['id'])
+            faulty_server_ids = list(map(lambda x: x.get("id"), faulty_servers))
+            # 4,执行连通性检测
+            self.perform_connectivity_check_in_node_failure(faulty_server_ids)
+            # 5,执行硬件检测
+            self.perform_hardware_checking_in_node_failure(faulty_server_ids)
+            # 6,执行拨号
+            self.perform_dialing_in_node_failure(faulty_server_ids, node['id'])
+            # 7,执行压测
+            time.sleep(60 * 5)
+            self.perform_stress_test_in_node_failure(node['id'])
+            time.sleep(60 * 10)
+            # 8,查询是否满足恢复条件
+            account_status = self.query_account_status_in_node_failure(node['id'])
+            if self.check_recovery_conditions_in_node_failure(account_status):
+                # 9,提交恢复申请
+                self.submit_node_recovery_application(node['id'], faulty_server_ids)
+                logger.info(f"白山<{self.login_supplier}>:节点{node['id']}提交恢复申请成功")
+            else:
+                logger.info(f"白山<{self.login_supplier}>:节点{node['id']}不满足恢复条件")
+
     def perform_server_stress_test_in_server_rack_mounting(self, p_id: int, ip_type: str = "ipv4") -> dict:
         """执行机柜ipv6压测"""
         query_data = {
@@ -573,17 +681,18 @@ class Baishan(Platform):
 
         return self.query_faulty_accounts()['account_fault_list']
 
-    if __name__ == "__main__":
-        import os
-        from utils.logger import setup_logger
-        from pprint import pprint
 
-        os.environ['APP_ENV'] = "dev"
-        logger = setup_logger()
+if __name__ == "__main__":
+    import os
+    from utils.logger import setup_logger
+    from pprint import pprint
 
-        baishan = Baishan("yicheng")
-        baishan.init()
-        # baishan = Baishan("vision_blue")
-        # 自动拨号
-        baishan.auto_recover_accounts_in_account_failure()
-        # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
+    os.environ['APP_ENV'] = "dev"
+    logger = setup_logger()
+
+    baishan = Baishan("yicheng")
+    baishan.init()
+    # baishan = Baishan("vision_blue")
+    # 自动拨号
+    baishan.auto_recover_accounts_in_account_failure()
+    # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")

@@ -1,6 +1,6 @@
 from celery import Celery
-from monitor.device_monitor import DevicesMonitor
-from checker.platform_spider.sites.baishan import Baishan
+from monitor.device_monitor import DevicesOnlineMonitor
+from checker.webpage_checker.sites.baishan import Baishan
 
 
 app = Celery('pcdn_monitor')
@@ -10,7 +10,7 @@ app.config_from_object('config.celery_config')
 @app.task
 def device_checker():
     """设备检测"""
-    monitor = DevicesMonitor()
+    monitor = DevicesOnlineMonitor()
     monitor.run()
 
 

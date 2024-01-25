@@ -10,8 +10,13 @@ beat_schedule = {
         'schedule': 600,  # 每隔10分钟
         'args': ()
     },
-    "baishan_auto_recover_accounts_every_hour": {
-        "task": "tasks.monitor_tasks.baishan_auto_recover_accounts",
+    "baishan_yicheng_auto_recover_accounts_every_hour": {
+        "task": "tasks.monitor_tasks.yicheng_auto_recover_accounts",
+        "schedule": crontab(minute="0", hour='9-19'),  # 每天9点到19点,每隔一个小时
+        "args": ()
+    },
+    "baishan_vision_blue_auto_recover_accounts_every_hour": {
+        "task": "tasks.monitor_tasks.vision_blue_auto_recover_accounts",
         "schedule": crontab(minute="0", hour='9-19'),  # 每天9点到19点,每隔一个小时
         "args": ()
     }

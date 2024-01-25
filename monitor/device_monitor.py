@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DevicesMonitor(BaseMonitor):
+class DevicesOnlineMonitor(BaseMonitor):
     """设备监控"""
 
     def __init__(self):

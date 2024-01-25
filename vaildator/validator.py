@@ -62,6 +62,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
 
         user_id = message.get("recipient").get("user_id")
         failure_ticket_id = message.get("fault_ticket_id")
+        # 如果user_id和failure_ticket_id都不存在,则直接返回message
         if not user_id and not failure_ticket_id:
             return message
         sql_session = SessionLocal()
