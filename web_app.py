@@ -80,6 +80,7 @@ def user_notify_frequency():
     :return:
     """
     sql_session = SessionLocal()
+    sql_session.expire_all()
     data = request.json
     print("recept_data", data)
     user_id = data.get('user_id')
@@ -116,10 +117,12 @@ def user_notify_frequency():
                                                             next_notify_time=next_notify_time)
             sql_session.add(user_notify_frequency_obj)
         sql_session.commit()
+        sql_session.close()
         # 返回user_notify_frequency_obj的next_notify_time
         return {"code": 0, "msg": "success", "next_notify_time": user_notify_frequency_obj.next_notify_time}
         # return {"code": 0, "msg": "success"}
     else:
+        sql_session.close()
         return {"code": 1, "msg": "参数错误"}
 
 
