@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation
 from notifier.wechat_template_message import WeChatTemplateMessage
-
+from vaildator.validator import BaseValidateError
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
@@ -71,7 +71,7 @@ class BaseMonitor(object):
                     msg['render_url'] = self.generate_fault_url(msg)
                     try:
                         msg = self.validate(msg)
-                    except Exception as e:
+                    except BaseValidateError as e:
                         logger.warning(f"验证失败:{e},取消发送")
                         return
                     sender().send_fault_notify(message=msg)
