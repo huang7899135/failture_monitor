@@ -18,14 +18,15 @@ class DevicesOnlineMonitor(BaseMonitor):
     """设备监控"""
 
     def __init__(self):
-        self.sql_session = SessionLocal()
+        # self.sql_session = SessionLocal()
         self.fault_message_template = DEVICE_FAULT_MESSAGE_TEMPLATE
         self.recover_message_template = DEVICE_RECOVER_MESSAGE_TEMPLATE
         super().__init__()
 
     def get_monitor_targets(self):
         """获取监控对象"""
-        devices = self.sql_session.query(Devices).filter(Devices.is_enable == True).all()
+        sql_session = SessionLocal()
+        devices = sql_session.query(Devices).filter(Devices.is_enable == True).all()
         devices_list = [{
             "id": device.id,
             "name": device.name,
@@ -65,8 +66,9 @@ class DevicesOnlineMonitor(BaseMonitor):
 
     def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在"""
+        sql_session = SessionLocal()
         device_id = msg.get("id")
-        devices = self.sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
+        devices = sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
                                                                (FailureTicket.is_done != True)).all()
         if devices:
             msg["fault_ticket_id"] = devices[0].id
@@ -75,19 +77,21 @@ class DevicesOnlineMonitor(BaseMonitor):
 
     def generate_fault_ticket(self, msg: dict):
         """生成维护工单,返回工单id"""
+        sql_session = SessionLocal()
         device_id = msg.get("id")
         fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
                                      is_done=False)
-        self.sql_session.add(fault_ticket)
-        self.sql_session.commit()
+        sql_session.add(fault_ticket)
+        sql_session.commit()
         msg["fault_ticket_id"] = fault_ticket.id
 
     def remove_fault_ticket(self, msg: dict, fault_tickets: list):
         """故障清除"""
+        sql_session = SessionLocal()
         for fault_ticket in fault_tickets:
             fault_ticket.is_done = True
             fault_ticket.recovery_time = msg["recovery_time"]
-        self.sql_session.commit()
+        sql_session.commit()
 
     def generate_fault_url(self, msg: dict):
         """生成故障url"""
