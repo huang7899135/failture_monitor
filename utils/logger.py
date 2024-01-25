@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 def setup_logger():
-    app_env = os.environ.get('APP_ENV', 'dev')  # 默认为 'development'
+    app_env = os.environ.get('ENV', 'prod')  # 默认为 'development'
     debug = app_env == 'dev'
 
     logger = logging.getLogger()

@@ -5,9 +5,11 @@ from model.models import Devices, FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
 # import logging
-from celery.utils.log import get_task_logger
+from utils.logger import setup_logger
+logger = setup_logger()
+# from celery.utils.log import get_task_logger
 
-logger = get_task_logger(__name__)
+# logger = get_task_logger(__name__)
 # logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
