@@ -81,11 +81,11 @@ def user_notify_frequency():
     """
     sql_session = SessionLocal()
     data = request.json
-    logger.info("recept_data", data)
+    print("recept_data", data)
     user_id = data.get('user_id')
     failure_ticket_id = data.get('ticket_id')
     next_notify_time = data.get('next_notify_time')
-    logger.info(f"next_notify_time:{next_notify_time}" )
+    print(f"next_notify_time:{next_notify_time}" )
     # 如果next_notify_time转换成datatime对象,并跟当前日期对比,如果小于now,则返回错误
     if next_notify_time:
         # next_notify_time = datetime.strptime(next_notify_time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -95,9 +95,9 @@ def user_notify_frequency():
         next_notify_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
         current_time = datetime.now().astimezone(pytz.timezone('Asia/Shanghai'))
 
-        logger.info(f"format_next_notify_time{next_notify_time}")
-        logger.info(f"current_time{current_time}")
-        logger.info(f"next_notify_time < current_time:{next_notify_time < current_time}")
+        print(f"format_next_notify_time{next_notify_time}")
+        print(f"current_time{current_time}")
+        print(f"next_notify_time < current_time:{next_notify_time < current_time}")
         if next_notify_time < current_time:
             return {"code": 1, "msg": "next_notify_time不能小于当前时间"}
 
