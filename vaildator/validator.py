@@ -81,7 +81,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
         if user_notify_frequency:
             next_notify_time = user_notify_frequency.next_notify_time
             current_time = datetime.now()
-            logger.debug(f"sqlalchemy query next_notify_time:{next_notify_time},current_time:{current_time}")
+            logger.warning(f"sqlalchemy query next_notify_time:{next_notify_time},current_time:{current_time}")
             if next_notify_time > current_time:
                 raise TimeValidateError("稍后回复")
 
