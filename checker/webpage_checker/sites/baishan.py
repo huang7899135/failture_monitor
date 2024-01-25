@@ -3,7 +3,11 @@ import time
 import os
 from .BasePlatform import Platform
 from pprint import pprint
-logger = logging.getLogger(__name__)
+
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class Baishan(Platform):

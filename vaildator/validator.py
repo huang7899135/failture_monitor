@@ -60,6 +60,9 @@ class UserNotifyFrequencyValidation(BaseValidation):
     # FIXME: 再celery查询出的user_notify_frequency跟最新的值不一致?
     def validate(self, message):
 
+        if not hasattr(message, "get"):
+            logger.error(f"message:{message} is not dict")
+            return message
         user_id = message.get("recipient").get("user_id")
         failure_ticket_id = message.get("fault_ticket_id")
         # 如果user_id和failure_ticket_id都不存在,则直接返回message

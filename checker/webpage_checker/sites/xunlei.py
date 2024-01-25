@@ -1,7 +1,10 @@
 from .BasePlatform import Platform
 import logging
+from celery.utils.log import get_task_logger
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
+
+# logger = logging.getLogger(__name__)
 
 
 class XunLei(Platform):

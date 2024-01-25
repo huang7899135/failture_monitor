@@ -23,4 +23,4 @@ DATABASE_URL = f"{DATABASE_CONFIG['dialect']}://{DATABASE_CONFIG['user']}:{DATAB
 
 ###############render_url################
 
-NETLOC = '36.137.133.155:8090'
+NETLOC = 'monitor.visionblue.cloud:8090'

@@ -4,9 +4,11 @@ from flask import Flask, render_template, request
 from model.models import Devices, FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
-import logging
+# import logging
+from celery.utils.log import get_task_logger
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
+# logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
 
@@ -77,11 +79,11 @@ def user_notify_frequency():
     """
     sql_session = SessionLocal()
     data = request.json
-    print("recept_data", data)
+    logger.info("recept_data", data)
     user_id = data.get('user_id')
     failure_ticket_id = data.get('ticket_id')
     next_notify_time = data.get('next_notify_time')
-    print("next_notify_time", next_notify_time)
+    logger.info("next_notify_time", next_notify_time)
     # 如果next_notify_time转换成datatime对象,并跟当前日期对比,如果小于now,则返回错误
     if next_notify_time:
         # next_notify_time = datetime.strptime(next_notify_time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -91,8 +93,9 @@ def user_notify_frequency():
         next_notify_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
         current_time = datetime.now().astimezone(pytz.timezone('Asia/Shanghai'))
 
-        print("format_next_notify_time", next_notify_time)
-        print("current_time", current_time)
+        logger.info("format_next_notify_time", next_notify_time)
+        logger.info("current_time", current_time)
+        logger.info("next_notify_time < current_time:", next_notify_time < current_time)
         if next_notify_time < current_time:
             return {"code": 1, "msg": "next_notify_time不能小于当前时间"}
 

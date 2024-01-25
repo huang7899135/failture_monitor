@@ -8,8 +8,11 @@ import os
 
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE
 from notifier.BaseNotifier import Notifier
+from celery.utils.log import get_task_logger
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
+
+# logger = logging.getLogger(__name__)
 
 
 class WeChatTemplateMessage(Notifier):

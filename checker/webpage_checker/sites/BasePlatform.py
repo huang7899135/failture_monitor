@@ -5,7 +5,11 @@ import pickle
 import requests
 import json
 from urllib3.exceptions import InsecureRequestWarning
-logger = logging.getLogger(__name__)
+
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+# logger = logging.getLogger(__name__)
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 

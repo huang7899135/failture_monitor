@@ -3,7 +3,10 @@ import logging
 from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation
 from notifier.wechat_template_message import WeChatTemplateMessage
 
-logger = logging.getLogger(__name__)
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class BaseMonitor(object):

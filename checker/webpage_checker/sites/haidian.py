@@ -4,8 +4,11 @@ import os
 from .BasePlatform import Platform
 from pprint import pprint
 import pickle
+from celery.utils.log import get_task_logger
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
+
+# logger = logging.getLogger(__name__)
 
 
 class Haidian(Platform):

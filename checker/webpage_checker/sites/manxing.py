@@ -3,8 +3,11 @@ import time
 import requests
 from .BasePlatform import Platform
 from utils.crypto import md5_encrypt
+from celery.utils.log import get_task_logger
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
+
+# logger = logging.getLogger(__name__)
 
 
 class ManXing(Platform):
