@@ -74,8 +74,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
                                  .join(FailureTicket,
                                        UserNotifyFrequency.failure_ticket_id == FailureTicket.id)  # 连接查询
                                  .filter(UserNotifyFrequency.user_id == user_id,
-                                         UserNotifyFrequency.failure_ticket_id == failure_ticket_id,
-                                         FailureTicket.is_done == False)
+                                         UserNotifyFrequency.failure_ticket_id == failure_ticket_id)
                                  .first())
         logger.warning(f"failure name:{user_notify_frequency.failure_ticket.device.name}, ticket id:{failure_ticket_id}")
         if user_notify_frequency:
