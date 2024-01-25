@@ -15,26 +15,6 @@ class BaseMonitor(object):
         self.Validations = [TimeValidation, UserNotifyFrequencyValidation]
         self.message_sender = [WeChatTemplateMessage]
 
-    # def get_monitor_objects_data(self):
-    #     """从配置文件或者数据库中获取监控对象的数据"""
-    #     if MONITOR_OBJECTS_DATA_SOURCE == "yaml":
-    #         project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    #         config_dir = os.path.join(project_path, MONITOR_OBJECTS_DATA_YAML_PATH)
-    #         with open(config_dir, "r", encoding='utf-8') as f:
-    #             return yaml.load(f, Loader=yaml.FullLoader)
-    #     else:
-    #         raise NotImplementedError
-
-    # def get_notification_recipient_group(self):
-    #     """从配置文件或者数据库中获取通知整个接收人组的数据"""
-    #     if MONITOR_OBJECTS_DATA_SOURCE == "yaml":
-    #         project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    #         config_dir = os.path.join(project_path, "datasource/notification_recipient_group.yaml")
-    #         with open(config_dir, "r", encoding='utf-8') as f:
-    #             return yaml.load(f, Loader=yaml.FullLoader)
-    #     else:
-    #         raise NotImplementedError
-
     def get_notify_recipient(self, msg) -> list:
         """提取对应组名对应的通知接收人信息"""
 

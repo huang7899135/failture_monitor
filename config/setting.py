@@ -1,6 +1,6 @@
 import os
 
-env = os.getenv('ENV', 'dev')
+env = os.getenv('ENV', 'prod')
 
 if env == 'prod':
     from config.setting_prod import *

@@ -138,12 +138,12 @@ class DeviceOnlineChecker:
         return False
 
 
-async def async_checker(target_list: list) -> list:
+async def async_checker(target_list: list) -> tuple:
     """传入target_list,执行检测,然后返回结果,target_list的格式为[(check_method, address, port), ...]"""
 
     tasks = []
-    for target in target_list:
-        tasks.append(AsyncDeviceOnlineChecker(target))
+    for target_obj in target_list:
+        tasks.append(AsyncDeviceOnlineChecker(target_obj))
     return await asyncio.gather(*[task.check() for task in tasks])
 
 
