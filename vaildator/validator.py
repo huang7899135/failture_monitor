@@ -77,7 +77,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
                                          UserNotifyFrequency.failure_ticket_id == failure_ticket_id,
                                          FailureTicket.is_done == False)
                                  .first())
-        logger.debug(f"user_notify_frequency:{user_notify_frequency}")
+        logger.warning(f"user_notify_frequency:{user_notify_frequency}")
         if user_notify_frequency:
             next_notify_time = user_notify_frequency.next_notify_time
             current_time = datetime.now()
