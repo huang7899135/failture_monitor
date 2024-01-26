@@ -81,7 +81,7 @@ def test_device_online_monitor():
 
 if __name__ == "__main__":
     import os
-    from utils.logger import setup_logger
+
     from pprint import pprint
 
     os.environ['APP_ENV'] = "dev"

@@ -149,7 +149,7 @@ async def async_checker(target_list: list) -> tuple:
     return await asyncio.gather(*[task.check() for task in tasks])
 
 
-def perform_async_check_devices(target_list: list) -> list:
+def perform_async_check_devices(target_list: list) -> tuple:
     """异步转换同步,检测设备是否在线,返回结果,结果格式为"""
 
     return asyncio.run(async_checker(target_list))

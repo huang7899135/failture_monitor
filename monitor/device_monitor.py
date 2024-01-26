@@ -1,8 +1,10 @@
+import sqlalchemy
+
 from config.setting import NETLOC
 from monitor.base import BaseMonitor
 from checker.devices_checker.checker import perform_async_check_devices
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE
-from model.models import Devices, FailureTicket
+from model.models import Devices, FailureTicket, Group
 from model.session import SessionLocal
 from sqlalchemy.orm import class_mapper, ColumnProperty
 import json
@@ -10,6 +12,8 @@ from urllib.parse import urlunparse, urlencode
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
+
+
 # import logging
 # logger = logging.getLogger(__name__)
 
@@ -22,6 +26,12 @@ class DevicesOnlineMonitor(BaseMonitor):
         self.fault_message_template = DEVICE_FAULT_MESSAGE_TEMPLATE
         self.recover_message_template = DEVICE_RECOVER_MESSAGE_TEMPLATE
         super().__init__()
+
+    @staticmethod
+    def convert_to_dict(obj):
+        if obj is None:
+            return None
+        return {c.key: getattr(obj, c.key) for c in sqlalchemy.inspect(obj).mapper.column_attrs}
 
     def get_monitor_targets(self):
         """获取监控对象"""
@@ -37,15 +47,19 @@ class DevicesOnlineMonitor(BaseMonitor):
             "port": device.port,
             "check_method": device.check_method,
             "group_id": device.group_id,
-            "group": device.group
+            # "group": device.group,
         } for device in devices]
+        sql_session.close()
         return devices_list
         # return self.get_monitor_objects_data()['devices']
 
     def get_notify_recipient(self, msg) -> list:
         """提取对应组名对应的通知接收人信息"""
         ret = []
-        group = msg.get("group")
+        # group = msg.get("group")
+        group_id = msg.get("group_id")
+        sql_session = SessionLocal()
+        group = sql_session.query(Group).filter(Group.id == group_id).first()
         user_object_list = group.users
         for user_object in user_object_list:
             user_notify_config_list = user_object.notify_config
@@ -58,6 +72,7 @@ class DevicesOnlineMonitor(BaseMonitor):
                 if config.is_enable:
                     user_info[config.notify_method.lower()] = config.user_value
             ret.append(user_info)
+        sql_session.close()
         return ret
 
     def perform_check(self):
@@ -69,7 +84,7 @@ class DevicesOnlineMonitor(BaseMonitor):
         sql_session = SessionLocal()
         device_id = msg.get("id")
         devices = sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
-                                                               (FailureTicket.is_done != True)).all()
+                                                          (FailureTicket.is_done != True)).all()
         if devices:
             msg["fault_ticket_id"] = devices[0].id
             return devices
