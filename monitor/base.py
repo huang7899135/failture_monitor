@@ -88,7 +88,7 @@ class BaseMonitor(object):
         """故障清除"""
         raise NotImplementedError
 
-    def send_recover_notify(self, msg: dict):
+    def send_recover_notify(self, msg: dict) -> None:
         """发送恢复通知"""
         try:
             msg = self.validate(msg)
@@ -118,7 +118,7 @@ class BaseMonitor(object):
                     msg['render_url'] = self.generate_recovery_url(msg)
                     sender().send_recovery_notify(message=msg)
 
-    def query_fault_ticket(self, msg: dict):
+    def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在,如果存在则给msg加上工单id"""
         raise NotImplementedError
 

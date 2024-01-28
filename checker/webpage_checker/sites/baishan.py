@@ -316,7 +316,7 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def query_faulty_servers_in_node_failure(self, node_feedback_id: int) -> dict:
+    def query_faulty_servers_in_node_failure(self, node_feedback_id: int) -> list:
         """查询故障节点下的故障服务器"""
         query_data = {
             "query": "\n    query (\n        $fault_receipt_id: Int\n        $check_status: [Int]\n        $status: ["
@@ -531,8 +531,12 @@ class Baishan(Platform):
             self.perform_stress_test_in_node_failure(node['id'])
             time.sleep(60 * 10)
             # 8,查询是否满足恢复条件
-            account_status = self.query_account_status_in_node_failure(node['id'])
-            if self.check_recovery_conditions_in_node_failure(account_status):
+            server_status = self.query_faulty_servers_in_node_failure(node['id'])
+            # FIXME: 下面有异常,需要处理
+            # File "/Users/a.huang/DEV/failure_monitor/checker/webpage_checker/sites/baishan.py", line 362, in <lambda>
+            #     is_checked_servers = list(filter(lambda x: x['check_status'] == 1, data))
+            # KeyError: 'check_status'
+            if self.check_recovery_conditions_in_node_failure(server_status):
                 # 9,提交恢复申请
                 self.submit_node_recovery_application(node['id'], faulty_server_ids)
                 logger.info(f"白山<{self.login_supplier}>:节点{node['id']}提交恢复申请成功")

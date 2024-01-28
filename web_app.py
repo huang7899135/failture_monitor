@@ -28,6 +28,9 @@ def index():
     failure_ticket_id = request.args.get('ticket_id')
     if failure_ticket_id:
         failure_ticket = SessionLocal().query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
+        if not failure_ticket:
+            # FIXME:为什么会出现failure_ticket 不存在的情况
+            return {"code": 1, "msg": "failure_ticket_id不存在"}
         data = {
             "device_name": failure_ticket.device.name,
             "location": failure_ticket.device.location,

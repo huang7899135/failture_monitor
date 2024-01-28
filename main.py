@@ -17,36 +17,7 @@ def test_node_recover():
     client = Baishan("vision_blue")
     # client = Baishan("yicheng")
     client.init()
-    fault_nodes = client.query_faulty_nodes()
-    for node in fault_nodes:
-        node_id = node.get("id")
-
-        # 查询故障节点的故障服务器
-        faulty_servers = client.query_faulty_servers_in_node_failure(node_id)
-        # 从故障服务器中提取故障服务器的id
-        faulty_server_ids = list(map(lambda x: x.get("id"), faulty_servers))
-
-        # pprint(faulty_servers)
-
-        # 执行故障节点的故障服务器的联通性检测
-        # res = client.perform_connectivity_check_in_node_failure(faulty_server_ids)
-        # pprint(res)
-
-        # # 执行故障节点的故障服务器的硬件检测
-        # res = client.perform_hardware_checking_in_node_failure(faulty_server_ids)
-        # pprint(res)
-        # # 执行故障节点的故障服务器的拨测
-        # res = client.perform_dialing_in_node_failure(faulty_server_ids, node_id)
-        # pprint(res)
-
-        # 执行故障节点的故障服务器的压测
-        # res = client.perform_stress_test_in_node_failure(node_id)
-        # pprint(res)
-
-        # res = client.submit_node_recovery_application(node_id, faulty_server_ids)
-
-        faulty_servers_status = client.query_faulty_servers_in_node_failure(node_id)
-        pprint(faulty_servers_status)
+    client.auto_recover_node_in_node_failure()
 
 
 def test_rack_mounting():
@@ -79,6 +50,20 @@ def test_device_online_monitor():
     monitor.run()
 
 
+def test_bug():
+    client = Baishan("yicheng")
+    client.init()
+    faulty_nodes = client.query_faulty_nodes()
+    # 2,遍历故障节点
+    for node in faulty_nodes:
+        faulty_servers = client.query_faulty_servers_in_node_failure(node['id'])
+        faulty_server_ids = list(map(lambda x: x.get("id"), faulty_servers))
+        # server_status = client.query_faulty_servers_in_node_failure(node['id'])
+
+        if client.check_recovery_conditions_in_node_failure(faulty_servers):
+            client.submit_node_recovery_application(node['id'], faulty_server_ids)
+
+
 if __name__ == "__main__":
     import os
 
@@ -92,3 +77,4 @@ if __name__ == "__main__":
     # test_rack_mounting()
     # test_haidian()
     test_device_online_monitor()
+    # test_bug()
