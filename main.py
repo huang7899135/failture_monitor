@@ -66,7 +66,7 @@ def test_bug():
 
 if __name__ == "__main__":
     import os
-
+    import time
     from pprint import pprint
 
     os.environ['APP_ENV'] = "dev"
@@ -76,5 +76,7 @@ if __name__ == "__main__":
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    test_device_online_monitor()
+    while True:
+        test_device_online_monitor()
+        time.sleep(5)
     # test_bug()

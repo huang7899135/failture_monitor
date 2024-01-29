@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation
+from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation, TimeValidateError
 from notifier.wechat_template_message import WeChatTemplateMessage
 from vaildator.validator import BaseValidateError
 from celery.utils.log import get_task_logger
@@ -90,11 +90,6 @@ class BaseMonitor(object):
 
     def send_recover_notify(self, msg: dict) -> None:
         """发送恢复通知"""
-        try:
-            msg = self.validate(msg)
-        except Exception as e:
-            logger.warning(f"验证失败:{e},取消发送")
-            return
         recipients = self.get_notify_recipient(msg)
         if not recipients:
             logger.warning(f"没有找到对应的通知接收人,取消发送")
@@ -116,7 +111,43 @@ class BaseMonitor(object):
                 if recipient.get(sender.name.lower()):
                     msg["recipient"] = recipient
                     msg['render_url'] = self.generate_recovery_url(msg)
+                    try:
+                        msg = self.validate(msg)
+                    except BaseValidateError as e:
+                        if not isinstance(e, TimeValidateError):
+                            logger.info(f"验证不通过:{e},取消发送")
+                            return
+                        # logger.warning(f"验证失败:{e},取消发送")
+                        # return
                     sender().send_recovery_notify(message=msg)
+
+        # try:
+        #     msg = self.validate(msg)
+        # except Exception as e:
+        #     logger.warning(f"验证失败:{e},取消发送")
+        #     return
+        # recipients = self.get_notify_recipient(msg)
+        # if not recipients:
+        #     logger.warning(f"没有找到对应的通知接收人,取消发送")
+        #     return
+        # # 消息发送器发送消息
+        # for sender in self.message_sender:
+        #     # 为msg添加故障时间为当时的时间
+        #     if not msg.get("recovery_time"):
+        #         msg["recovery_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #     else:
+        #         # 如果msg中已经有recovery_time,则将其转换为字符串,原本为datetime对象
+        #         msg["recovery_time"] = msg.get("recovery_time").strftime("%Y-%m-%d %H:%M:%S")
+        #
+        #     for recipient in recipients:
+        #         # recipient的格式为:
+        #         # {   "user_id": 1,
+        #         #     "name": "张三",
+        #         #     <消息发送器的name>: <uuid>}
+        #         if recipient.get(sender.name.lower()):
+        #             msg["recipient"] = recipient
+        #             msg['render_url'] = self.generate_recovery_url(msg)
+        #             sender().send_recovery_notify(message=msg)
 
     def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在,如果存在则给msg加上工单id"""
@@ -135,16 +166,27 @@ class BaseMonitor(object):
                 如果存在,则清除工单
                 如果不存在,pass
         """
+        # logger.info("begin identify message")
         if not msg['is_online']:
+            # logger.info(f"发现故障:{msg}")
+            # fault_tickets = self.query_fault_ticket(msg)
+            # print(fault_tickets, "fault_tickets")
             if not self.query_fault_ticket(msg):
+                # logger.info(f"没有发现故障工单,新建工单")
                 self.generate_fault_ticket(msg)
+                # logger.info(f"新建工单成功")
             self.send_fault_notify(msg)
+            # logger.info(f"发送故障通知成功")
         else:
+            # logger.info(f"设备在线:{msg}")
             fault_tickets = self.query_fault_ticket(msg)
+            # logger.info(f"查询工单成功,工单编号:{fault_tickets}")
             if fault_tickets:
+                # logger.info(f"有工单,发送恢复消息")
                 msg["recovery_time"] = datetime.now()
-                self.remove_fault_ticket(msg, fault_tickets)
+                msg["fault_time"] = fault_tickets[0].fault_time.strftime("%Y-%m-%d %H:%M:%S")
                 self.send_recover_notify(msg)
+                self.remove_fault_ticket(msg, fault_tickets)
             else:
                 pass
 

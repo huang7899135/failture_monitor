@@ -185,5 +185,5 @@ if __name__ == "__main__":
 
     ]
     ret = perform_async_check_devices(target)
-    print(ret)
-    print(time.time() - s)
+    # print(ret)
+    # print(time.time() - s)

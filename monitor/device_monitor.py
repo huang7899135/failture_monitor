@@ -81,14 +81,19 @@ class DevicesOnlineMonitor(BaseMonitor):
 
     def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在"""
+        # logger.info(f"查询故障工单:{msg}")
         sql_session = SessionLocal()
-        device_id = msg.get("id")
-        devices = sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
-                                                          (FailureTicket.is_done != True)).all()
-        if devices:
-            msg["fault_ticket_id"] = devices[0].id
-            return devices
-        return []
+        ret = []
+        try:
+            device_id = msg.get("id")
+            devices = sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
+                                                              (FailureTicket.is_done != True)).all()
+            if devices:
+                msg["fault_ticket_id"] = devices[0].id
+                ret = devices
+        finally:
+            sql_session.close()
+        return ret
 
     def generate_fault_ticket(self, msg: dict):
         """生成维护工单,返回工单id"""
@@ -99,14 +104,16 @@ class DevicesOnlineMonitor(BaseMonitor):
         sql_session.add(fault_ticket)
         sql_session.commit()
         msg["fault_ticket_id"] = fault_ticket.id
+        sql_session.close()
 
     def remove_fault_ticket(self, msg: dict, fault_tickets: list):
         """故障清除"""
         sql_session = SessionLocal()
-        for fault_ticket in fault_tickets:
-            fault_ticket.is_done = True
-            fault_ticket.recovery_time = msg["recovery_time"]
+        id_list = list(map(lambda x: x.id, fault_tickets))
+        sql_session.query(FailureTicket).filter(FailureTicket.id.in_(id_list)).update(
+            {"is_done": True, "recovery_time": msg["recovery_time"]})
         sql_session.commit()
+        sql_session.close()
 
     def generate_fault_url(self, msg: dict):
         """生成故障url"""
