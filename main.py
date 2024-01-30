@@ -34,7 +34,7 @@ def test_rack_mounting():
 def test_haidian():
     haidian = Haidian()
     haidian.init()
-    ret = haidian.query_server_status()
+    ret = haidian.auto_check_server_revenue()
     pprint(ret)
 
 
@@ -72,11 +72,13 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
+    test_haidian()
+
     # test_openfog()
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    while True:
-        test_device_online_monitor()
-        time.sleep(5)
+    # while True:
+    #     test_device_online_monitor()
+    #     time.sleep(5)
     # test_bug()
