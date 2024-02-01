@@ -12,6 +12,7 @@ from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
+
 # logger = logging.getLogger(__name__)
 
 
@@ -153,7 +154,30 @@ class WeChatTemplateMessage(Notifier):
         }
         return self.__send_messages(to_user, template_id, render_url, template_data)
 
-    def send_fault_notify(self,message: dict):
+    def send_abnormal_equipment_notification(self, to_user, render_url, equipment_type, equipment_name, fault_date,
+                                             fault_location, fault_reason):
+        """
+        发送设备异常通知
+        :param to_user:
+        :param render_url:
+        :param equipment_type:
+        :param equipment_name:
+        :param fault_date:
+        :param fault_location:
+        :param fault_reason:
+        :return:
+        """
+        template_id = "Kgf4u_rucA5fp6qE3Q2p9GR05nlKCJdEdJTeTnkli90"
+        template_data = {
+            "thing4": {"value": equipment_type},  # 设备类型
+            "thing8": {"value": "equipment_name"},  # 设备名
+            "time9": {"value": fault_date},  # 故障日期
+            "thing11": {"value": fault_location},  # 故障地点
+            "thing6": {"value": fault_reason},  # 故障原因
+        }
+        return self.__send_messages(to_user, template_id, render_url, template_data)
+
+    def send_fault_notify(self, message: dict):
         """发送故障通知"""
         to_user = message.get("recipient").get(self.name.lower())
         message['recipient_name'] = message.get("recipient").get("name")
@@ -164,7 +188,7 @@ class WeChatTemplateMessage(Notifier):
         remark = DEVICE_FAULT_MESSAGE_TEMPLATE.format(**message)
         self.send_network_outage_notification(to_user, render_url, fault_location, fault_time, remark)
 
-    def send_recovery_notify(self,message: dict):
+    def send_recovery_notify(self, message: dict):
         """发送恢复通知"""
         to_user = message.get("recipient").get(self.name.lower())
         message['recipient_name'] = message.get("recipient").get("name")

@@ -82,3 +82,28 @@ class UserNotifyFrequency(Base):
     failure_ticket_id = Column(Integer, ForeignKey('failure_tickets.id'))
     failure_ticket = relationship('FailureTicket', backref='user_notify_configurations')
     next_notify_time = Column(DateTime)
+
+
+class IncomeMonitorServer(Base):
+    """收入监控服务器"""
+    __tablename__ = 'income_monitor_servers'
+
+    id = Column(Integer, primary_key=True)
+    is_enable = Column(Boolean, default=True, nullable=True)
+    device_sn = Column(String(50))
+    platform = Column(String(50))
+    expected_income = Column(Integer)
+    remark = Column(String(50))
+    group_id = Column(Integer, ForeignKey('groups.id'))
+    group = relationship('Group', backref='income_monitor_servers')
+    description = Column(String(1000), nullable=True)
+
+
+class IncomeMonitorPlatform(Base):
+    """收入监控平台"""
+    __tablename__ = 'income_monitor_platforms'
+
+    id = Column(Integer, primary_key=True)
+    is_enable = Column(Boolean, default=True, nullable=True)
+    platform = Column(String(50))  # 平台名称,需要跟类的名字保持一致,如Baishan,HaiDian
+    description = Column(String(1000), nullable=True)

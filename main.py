@@ -1,7 +1,8 @@
-from monitor.device_monitor import DevicesOnlineMonitor
+from monitor.device_online_monitor import DevicesOnlineMonitor
+from monitor.server_income_monitor import ServerIncomeMonitor
 from checker.webpage_checker.sites.baishan import Baishan
 from checker.webpage_checker.sites.openfog import Openfog
-from checker.webpage_checker.sites.haidian import Haidian
+from checker.webpage_checker.sites.haidian import HaiDian
 from notifier.wechat_template_message import WeChatTemplateMessage
 from utils.logger import setup_logger
 import os
@@ -32,10 +33,9 @@ def test_rack_mounting():
 
 
 def test_haidian():
-    haidian = Haidian()
-    haidian.init()
-    ret = haidian.auto_check_server_revenue()
-    pprint(ret)
+    with HaiDian() as haidian:
+        ret = haidian.perform_income_check()
+        pprint(ret)
 
 
 def test_openfog():
@@ -64,6 +64,11 @@ def test_bug():
             client.submit_node_recovery_application(node['id'], faulty_server_ids)
 
 
+def server_income_monitor():
+    with ServerIncomeMonitor() as monitor:
+        monitor.run()
+
+
 if __name__ == "__main__":
     import os
     import time
@@ -72,13 +77,13 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    test_haidian()
-
+    # test_haidian()
+    server_income_monitor()
     # test_openfog()
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
     # while True:
-    #     test_device_online_monitor()
+    # test_device_online_monitor()
     #     time.sleep(5)
     # test_bug()

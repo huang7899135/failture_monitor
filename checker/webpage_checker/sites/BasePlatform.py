@@ -1,12 +1,14 @@
-from abc import ABC, abstractmethod
-import logging
+import calendar
 import os
 import pickle
+from datetime import datetime
+
 import requests
 import json
+from abc import ABC, abstractmethod
 from urllib3.exceptions import InsecureRequestWarning
-
 from celery.utils.log import get_task_logger
+from model.session import SessionLocal
 
 logger = get_task_logger(__name__)
 # logger = logging.getLogger(__name__)
@@ -18,7 +20,8 @@ class Platform(ABC):
     def __init__(self):
         self.platform_name = self.__class__.__name__.lower()
         # 动态获取session_file_path,当前路径的上一级目录的sessions目录
-        self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), f"sessions/{self.platform_name}")
+        self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                              f"sessions/{self.platform_name}")
         self.session = None
         self.login_info = self.__load_config()["login_info"][self.platform_name]
         self.username = self.login_info["username"]
@@ -31,7 +34,7 @@ class Platform(ABC):
     @staticmethod
     def __load_config():
         root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        file_path = os.path.join(root_dir,"config", 'platform_config.json')
+        file_path = os.path.join(root_dir, "config", 'platform_config.json')
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
@@ -68,6 +71,8 @@ class Platform(ABC):
             resp = self.session.get(*args, **kwargs, verify=False)
         return resp
 
+
+
     def init(self):
         self.session = self.load_session()
 
@@ -92,6 +97,7 @@ class Platform(ABC):
             raise Exception(f"请求失败:{resp.status_code}")
 
     def load_session(self):
+        """加载本地session"""
         if os.path.exists(self.session_file_path):
             with open(self.session_file_path, 'rb') as f:
                 try:
@@ -105,6 +111,7 @@ class Platform(ABC):
         return None
 
     def save_session(self):
+        """保存session到本地"""
         try:
             with open(self.session_file_path, 'wb') as f:
                 pickle.dump(self.session, f)
@@ -112,3 +119,49 @@ class Platform(ABC):
             logger.warning(f"session保存失败:{e}")
         logger.info("session保存成功")
 
+
+class Billing95PercentilePlatform(Platform):
+    def __init__(self):
+        super().__init__()
+        self.sql_session = None
+
+    def __enter__(self):
+        self.init()
+        self.sql_session = SessionLocal()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.sql_session.close()
+        pass
+
+    @abstractmethod
+    def _login(self, *args, **kwargs):
+        pass
+
+    @staticmethod
+    def get_current_month_days():
+        """计算本月天数"""
+        now = datetime.now()
+        days = calendar.monthrange(now.year, now.month)[1]
+        return days
+
+    @abstractmethod
+    def query_server_income_info(self) -> list:
+        pass
+
+    @abstractmethod
+    def analyze_server_income(self, income_info: list) -> dict:
+        """
+        分析服务器收益
+        :param income_info: 从query_server_revenue_status获取的服务器信息
+        :return: {
+            "problem_servers": [],
+            "normal_servers": []}
+        """
+        pass
+
+    def perform_income_check(self):
+        """执行收入检查"""
+        income_info = self.query_server_income_info()
+        income_info = self.analyze_server_income(income_info)
+        return income_info

@@ -1,196 +1,83 @@
-from datetime import datetime
-import logging
+from model.models import Group
+from model.session import SessionLocal
 from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation, TimeValidateError
 from notifier.wechat_template_message import WeChatTemplateMessage
 from vaildator.validator import BaseValidateError
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
-# logger = logging.getLogger(__name__)
 
 
 class BaseMonitor(object):
 
     def __init__(self):
         self.send_group = None
-        self.monitor_targets = self.get_monitor_targets()
+        # self.monitor_targets = self.get_monitor_targets()
         # self.notification_recipient_group = self.get_notification_recipient_group()
         self.Validations = [TimeValidation, UserNotifyFrequencyValidation]
         self.message_sender = [WeChatTemplateMessage]
 
-    def get_notify_recipient(self, msg) -> list:
-        """提取对应组名对应的通知接收人信息"""
-
-        raise NotImplementedError
+    @staticmethod
+    def get_notify_recipient(group_id: int) -> list:
+        """
+        提取对应组名对应的通知接收人信息
+        :param group_id:
+        :return: group_id对应的通知接收人列表,包含通知人的配置以{<notify_method>: <user_value>}形式
+        """
+        ret = []
+        sql_session = SessionLocal()
+        group = sql_session.query(Group).filter(Group.id == group_id).first()
+        user_object_list = group.users
+        for user_object in user_object_list:
+            user_notify_config_list = user_object.notify_config
+            user_info = {
+                "user_id": user_object.id,
+                "name": user_object.name,
+                "gender": user_object.gender
+            }
+            for config in user_notify_config_list:
+                if config.is_enable:
+                    user_info[config.notify_method.lower()] = config.user_value
+            ret.append(user_info)
+        sql_session.close()
+        return ret
 
     def get_monitor_targets(self) -> list:
-        """获取监控对象"""
+        """
+        获取监控对象
+        :return: 监控对象列表
+        """
         raise NotImplementedError
 
-    def perform_check(self):
-        """监控"""
+    def perform_check(self) -> list:
+        """
+        执行检查
+        :return: 返回检查结果的列表
+        """
         raise NotImplementedError
 
-    def send_notice(self):
+    def send_notice(self, msg: dict):
         """发送通知"""
         raise NotImplementedError
 
-    def validate(self, msg):
-        """逐个验证"""
+    def validate(self, msg: dict) -> dict:
+        """
+        验证消息
+        :param msg: <dict>,单条的检查结果
+        :return:
+        """
         for validation in self.Validations:
             msg = validation().validate(msg)
         return msg
 
-    def generate_fault_ticket(self, msg: dict):
-        """生成维护工单"""
+    def analyze_message_and_send_notify(self, msg: dict) -> None:
+        """分析消息并发送通知"""
         raise NotImplementedError
-
-    def send_fault_notify(self, msg: dict):
-        """发送故障通知"""
-
-        recipients = self.get_notify_recipient(msg)
-        if not recipients:
-            logger.warning(f"没有找到对应的通知接收人,取消发送")
-            return
-        # 消息发送器发送消息
-        for sender in self.message_sender:
-            # 为msg添加故障时间为当时的时间
-            if not msg.get("fault_time"):
-                msg["fault_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                # 如果msg中已经有fault_time,则将其转换为字符串,原本为datetime对象
-                msg["fault_time"] = msg.get("fault_time").strftime("%Y-%m-%d %H:%M:%S")
-
-            for recipient in recipients:
-                # recipient的格式为:
-                # {   "user_id": 1,
-                #     "name": "张三",
-                #     <消息发送器的name>: <uuid>}
-                if recipient.get(sender.name.lower()):
-                    msg["recipient"] = recipient
-                    msg['render_url'] = self.generate_fault_url(msg)
-                    try:
-                        msg = self.validate(msg)
-                    except BaseValidateError as e:
-                        logger.warning(f"验证失败:{e},取消发送")
-                        return
-                    sender().send_fault_notify(message=msg)
-
-    def generate_fault_url(self, msg: dict):
-        """生成故障url"""
-        raise NotImplementedError
-
-    def generate_recovery_url(self, msg: dict):
-        """生成恢复url"""
-        return "www.baidu.com"
-
-    def remove_fault_ticket(self, msg: dict, fault_tickets: list):
-        """故障清除"""
-        raise NotImplementedError
-
-    def send_recover_notify(self, msg: dict) -> None:
-        """发送恢复通知"""
-        recipients = self.get_notify_recipient(msg)
-        if not recipients:
-            logger.warning(f"没有找到对应的通知接收人,取消发送")
-            return
-        # 消息发送器发送消息
-        for sender in self.message_sender:
-            # 为msg添加故障时间为当时的时间
-            if not msg.get("recovery_time"):
-                msg["recovery_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                # 如果msg中已经有recovery_time,则将其转换为字符串,原本为datetime对象
-                msg["recovery_time"] = msg.get("recovery_time").strftime("%Y-%m-%d %H:%M:%S")
-
-            for recipient in recipients:
-                # recipient的格式为:
-                # {   "user_id": 1,
-                #     "name": "张三",
-                #     <消息发送器的name>: <uuid>}
-                if recipient.get(sender.name.lower()):
-                    msg["recipient"] = recipient
-                    msg['render_url'] = self.generate_recovery_url(msg)
-                    try:
-                        msg = self.validate(msg)
-                    except BaseValidateError as e:
-                        if not isinstance(e, TimeValidateError):
-                            logger.info(f"验证不通过:{e},取消发送")
-                            return
-                        # logger.warning(f"验证失败:{e},取消发送")
-                        # return
-                    sender().send_recovery_notify(message=msg)
-
-        # try:
-        #     msg = self.validate(msg)
-        # except Exception as e:
-        #     logger.warning(f"验证失败:{e},取消发送")
-        #     return
-        # recipients = self.get_notify_recipient(msg)
-        # if not recipients:
-        #     logger.warning(f"没有找到对应的通知接收人,取消发送")
-        #     return
-        # # 消息发送器发送消息
-        # for sender in self.message_sender:
-        #     # 为msg添加故障时间为当时的时间
-        #     if not msg.get("recovery_time"):
-        #         msg["recovery_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        #     else:
-        #         # 如果msg中已经有recovery_time,则将其转换为字符串,原本为datetime对象
-        #         msg["recovery_time"] = msg.get("recovery_time").strftime("%Y-%m-%d %H:%M:%S")
-        #
-        #     for recipient in recipients:
-        #         # recipient的格式为:
-        #         # {   "user_id": 1,
-        #         #     "name": "张三",
-        #         #     <消息发送器的name>: <uuid>}
-        #         if recipient.get(sender.name.lower()):
-        #             msg["recipient"] = recipient
-        #             msg['render_url'] = self.generate_recovery_url(msg)
-        #             sender().send_recovery_notify(message=msg)
-
-    def query_fault_ticket(self, msg: dict) -> list:
-        """判断工单是否存在,如果存在则给msg加上工单id"""
-        raise NotImplementedError
-
-    def identify_message_and_send_notice(self, msg):
-        """消息识别,并决定到底是否生成工单,发送什么类型的通知
-        判定msg[is_online]是否为False
-        is_online如果为False,
-            则判断判断是否已经存在工单
-                如果存在,则无需新建工单
-                如果不存在,则新建工单
-                执行validate后,发送notice
-        is_online如果为True,
-            则判断是否存在工单
-                如果存在,则清除工单
-                如果不存在,pass
-        """
-        # logger.info("begin identify message")
-        if not msg['is_online']:
-            # logger.info(f"发现故障:{msg}")
-            # fault_tickets = self.query_fault_ticket(msg)
-            # print(fault_tickets, "fault_tickets")
-            if not self.query_fault_ticket(msg):
-                # logger.info(f"没有发现故障工单,新建工单")
-                self.generate_fault_ticket(msg)
-                # logger.info(f"新建工单成功")
-            self.send_fault_notify(msg)
-            # logger.info(f"发送故障通知成功")
-        else:
-            # logger.info(f"设备在线:{msg}")
-            fault_tickets = self.query_fault_ticket(msg)
-            # logger.info(f"查询工单成功,工单编号:{fault_tickets}")
-            if fault_tickets:
-                # logger.info(f"有工单,发送恢复消息")
-                msg["recovery_time"] = datetime.now()
-                msg["fault_time"] = fault_tickets[0].fault_time.strftime("%Y-%m-%d %H:%M:%S")
-                self.send_recover_notify(msg)
-                self.remove_fault_ticket(msg, fault_tickets)
-            else:
-                pass
 
     def run(self):
         check_results = self.perform_check()
+        if not check_results:
+            logger.info("没有检测到异常")
+            return
         for msg in check_results:
-            self.identify_message_and_send_notice(msg)
+            self.analyze_message_and_send_notify(msg)

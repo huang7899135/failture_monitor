@@ -1,5 +1,5 @@
 from celery import Celery
-from monitor.device_monitor import DevicesOnlineMonitor
+from monitor.device_online_monitor import DevicesOnlineMonitor
 from checker.webpage_checker.sites.baishan import Baishan
 
 app = Celery('pcdn_monitor')
