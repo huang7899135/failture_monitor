@@ -60,9 +60,6 @@ class DevicesOnlineMonitor(BaseMonitor):
         """发送故障通知"""
         group_id = msg.get("group_id")
         recipients = self.get_notify_recipient(group_id)
-        if not recipients:
-            logger.warning(f"没有找到对应的通知接收人,取消发送")
-            return
         # 消息发送器发送消息
         for sender in self.message_sender:
             # 为msg添加故障时间为当时的时间
@@ -91,9 +88,6 @@ class DevicesOnlineMonitor(BaseMonitor):
         """发送恢复通知"""
         group_id = msg.get("group_id")
         recipients = self.get_notify_recipient(group_id)
-        if not recipients:
-            logger.warning(f"没有找到对应的通知接收人,取消发送")
-            return
         # 消息发送器发送消息
         for sender in self.message_sender:
             # 为msg添加故障时间为当时的时间
@@ -120,6 +114,24 @@ class DevicesOnlineMonitor(BaseMonitor):
                         # logger.warning(f"验证失败:{e},取消发送")
                         # return
                     sender().send_recovery_notify(message=msg)
+
+    def send_notice(self, msg: dict, customize_personal_message: callable, perform_sender: callable,
+                    exception_handler: callable = None, ):
+        """发送通知"""
+        group_id = msg.get("group_id")
+        recipients = self.get_notify_recipient(group_id)
+        # 消息发送器发送消息
+        for sender in self.message_sender:
+            for recipient in recipients:
+                if recipient.get(sender.name.lower()):
+                    msg = customize_personal_message(recipient, msg)
+                    try:
+                        msg = self.validate(msg)
+                    except Exception as e:
+                        error_ret, should_return = exception_handler(e, msg)
+                        if should_return:
+                            return error_ret
+                    perform_sender(sender=sender, message=msg)
 
     def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在"""

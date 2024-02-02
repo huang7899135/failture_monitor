@@ -51,9 +51,6 @@ class ServerIncomeMonitor(BaseMonitor):
         """发送通知"""
         group_id = msg.get("group_id")
         recipients = self.get_notify_recipient(group_id)
-        if not recipients:
-            logger.warning(f"没有找到对应的通知接收人,取消发送")
-            return
         # 消息发送器发送消息
         for sender in self.message_sender:
             for recipient in recipients:

@@ -31,7 +31,6 @@ class BaseMonitor(object):
         :return: group_id对应的通知接收人列表,包含通知人的配置以{<notify_method>: <user_value>}形式
         """
         ret = []
-        # sql_session = SessionLocal()
         group = self.sql_session.query(Group).filter(Group.id == group_id).first()
         user_object_list = group.users
         for user_object in user_object_list:
@@ -45,6 +44,9 @@ class BaseMonitor(object):
                 if config.is_enable:
                     user_info[config.notify_method.lower()] = config.user_value
             ret.append(user_info)
+        if not ret:
+            logger.warning("没有找到组对应的通知接收人")
+            raise ValueError("没有找到组对应的通知接收人")
         return ret
 
     def get_monitor_targets(self) -> list:
@@ -61,7 +63,8 @@ class BaseMonitor(object):
         """
         raise NotImplementedError
 
-    def send_notice(self, msg: dict):
+    def send_notice(self, msg: dict, customize_personal_message: callable, exception_handler: callable,
+                    perform_sender: callable):
         """发送通知"""
         raise NotImplementedError
 
