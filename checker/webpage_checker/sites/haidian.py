@@ -1,8 +1,7 @@
 import os
-from model.models import IncomeMonitorServer
-from model.session import SessionLocal
-from .BasePlatform import Billing95PercentilePlatform
 import pickle
+from model.models import IncomeMonitorServer
+from .BasePlatform import Billing95PercentilePlatform
 from celery.utils.log import get_task_logger
 
 
@@ -131,6 +130,7 @@ class HaiDian(Billing95PercentilePlatform):
                 else:  # 否则直接赋值
                     description = f"昨日收入{yesterday_profit}元"
             if flat:
+                logger.debug(f"haidian:{device_sn}:({remark})异常,昨日收入{yesterday_profit}元,预期收入{expected_income}元")
                 problem_servers.append({
                     "device_sn": device_sn,
                     "description": description,

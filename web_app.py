@@ -1,10 +1,9 @@
 from datetime import datetime
 import pytz
 from flask import Flask, render_template, request
-from model.models import Devices, FailureTicket, User, UserNotifyFrequency
+from model.models import FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
-# import logging
 from utils.logger import setup_logger
 logger = setup_logger()
 # from celery.utils.log import get_task_logger
@@ -17,17 +16,17 @@ app = Flask(__name__, template_folder='web/templates', static_folder='web/static
 @app.route('/device_failure', methods=['GET'])
 def index():
     """用户故障通知视图"""
+    sql_session = SessionLocal()
     user_id = request.args.get('user_id')
-
     recipient_name = ""
     recipient_gender = "先生/女士"
     if user_id:
-        user_obj = SessionLocal().query(User).filter(User.id == user_id).first()
+        user_obj = sql_session.query(User).filter(User.id == user_id).first()
         recipient_name = user_obj.name
         recipient_gender = "先生" if user_obj.gender == "male" else "女士"
     failure_ticket_id = request.args.get('ticket_id')
     if failure_ticket_id:
-        failure_ticket = SessionLocal().query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
+        failure_ticket = sql_session.query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
         if not failure_ticket:
             # FIXME:为什么会出现failure_ticket 不存在的情况
             return {"code": 1, "msg": "failure_ticket_id不存在"}
@@ -49,6 +48,7 @@ def index():
             )
             # "remark": failure_ticket.description
         }
+        sql_session.close()
         return render_template('fault.html', device_name=data['device_name'], location=data['location'],
                                ip=data['ip'], port=data['port'], fault_time=data['fault_time']
                                , processors=data['processors'], remark=data['remark'])
@@ -63,14 +63,16 @@ def index2():
     data = request.json
     user_id = data.get('user_id')
     failure_ticket_id = data.get('ticket_id')
-
+    sql_session = SessionLocal()
     if user_id and failure_ticket_id:
-        failure_ticket = SessionLocal().query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
+        failure_ticket = sql_session.query(FailureTicket).filter(FailureTicket.id == failure_ticket_id).first()
         failure_ticket.is_accepted = True
         failure_ticket.handler_id = user_id
-        SessionLocal().commit()
+        sql_session.commit()
+        sql_session.close()
         return {"code": 0, "msg": "success"}
     else:
+        sql_session.close()
         return {"code": 1, "msg": "参数错误"}
 
 

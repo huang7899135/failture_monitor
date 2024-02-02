@@ -9,35 +9,31 @@ app.config_from_object('config.celery_config')
 @app.task
 def device_checker():
     """设备检测"""
-    monitor = DevicesOnlineMonitor()
-    monitor.run()
+    with DevicesOnlineMonitor() as monitor:
+        monitor.run()
 
 
 @app.task
 def yicheng_auto_recover_accounts():
     """白山自动恢复账号故障"""
-    yicheng = Baishan("yicheng")
-    yicheng.init()
-    yicheng.auto_recover_accounts_in_account_failure()
+    with Baishan("yicheng") as yicheng:
+        yicheng.auto_recover_accounts_in_account_failure()
 
 
 @app.task
 def vision_blue_auto_recover_accounts():
-    vision_blue = Baishan("vision_blue")
-    vision_blue.init()
-    vision_blue.auto_recover_accounts_in_account_failure()
+    with Baishan("vision_blue") as vision_blue:
+        vision_blue.auto_recover_accounts_in_account_failure()
 
 
 @app.task
 def yicheng_auto_recover_nodes():
     """白山自动恢复节点故障"""
-    yicheng = Baishan("yicheng")
-    yicheng.init()
-    yicheng.auto_recover_node_in_node_failure()
+    with Baishan("yicheng") as yicheng:
+        yicheng.auto_recover_node_in_node_failure()
 
 
 @app.task
 def vision_blue_auto_recover_nodes():
-    vision_blue = Baishan("vision_blue")
-    vision_blue.init()
-    vision_blue.auto_recover_node_in_node_failure()
+    with Baishan("vision_blue") as vision_blue:
+        vision_blue.auto_recover_node_in_node_failure()

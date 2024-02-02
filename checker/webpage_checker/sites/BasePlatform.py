@@ -11,7 +11,6 @@ from celery.utils.log import get_task_logger
 from model.session import SessionLocal
 
 logger = get_task_logger(__name__)
-# logger = logging.getLogger(__name__)
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
@@ -30,6 +29,13 @@ class Platform(ABC):
 
     def __bool__(self):
         return self.is_login
+
+    def __enter__(self):
+        self.init()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
     @staticmethod
     def __load_config():
@@ -70,8 +76,6 @@ class Platform(ABC):
             self._login()
             resp = self.session.get(*args, **kwargs, verify=False)
         return resp
-
-
 
     def init(self):
         self.session = self.load_session()

@@ -2,7 +2,6 @@ from model.models import Group
 from model.session import SessionLocal
 from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation, TimeValidateError
 from notifier.wechat_template_message import WeChatTemplateMessage
-from vaildator.validator import BaseValidateError
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
@@ -12,21 +11,28 @@ class BaseMonitor(object):
 
     def __init__(self):
         self.send_group = None
-        # self.monitor_targets = self.get_monitor_targets()
-        # self.notification_recipient_group = self.get_notification_recipient_group()
         self.Validations = [TimeValidation, UserNotifyFrequencyValidation]
         self.message_sender = [WeChatTemplateMessage]
+        self.sql_session = None
 
-    @staticmethod
-    def get_notify_recipient(group_id: int) -> list:
+    def __enter__(self):
+        self.sql_session = SessionLocal()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.sql_session.close()
+        # 如果数据库异常,则不会提交事务
+        pass
+
+    def get_notify_recipient(self, group_id: int) -> list:
         """
         提取对应组名对应的通知接收人信息
         :param group_id:
         :return: group_id对应的通知接收人列表,包含通知人的配置以{<notify_method>: <user_value>}形式
         """
         ret = []
-        sql_session = SessionLocal()
-        group = sql_session.query(Group).filter(Group.id == group_id).first()
+        # sql_session = SessionLocal()
+        group = self.sql_session.query(Group).filter(Group.id == group_id).first()
         user_object_list = group.users
         for user_object in user_object_list:
             user_notify_config_list = user_object.notify_config
@@ -39,7 +45,6 @@ class BaseMonitor(object):
                 if config.is_enable:
                     user_info[config.notify_method.lower()] = config.user_value
             ret.append(user_info)
-        sql_session.close()
         return ret
 
     def get_monitor_targets(self) -> list:

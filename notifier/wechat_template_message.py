@@ -3,7 +3,6 @@ import requests
 import json
 from config import wechat_secret
 import pickle
-import logging
 import os
 
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE

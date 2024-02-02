@@ -1,5 +1,4 @@
 from .BasePlatform import Platform
-import logging
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)

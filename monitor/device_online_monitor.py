@@ -2,13 +2,10 @@ import sqlalchemy
 from datetime import datetime
 from config.setting import NETLOC
 from monitor.base import BaseMonitor
-from vaildator.validator import BaseValidateError, TimeValidation, UserNotifyFrequencyValidation, TimeValidateError
+from vaildator.validator import BaseValidateError, TimeValidateError
 from checker.devices_checker.checker import perform_async_check_devices
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE, DEVICE_RECOVER_MESSAGE_TEMPLATE
-from model.models import Devices, FailureTicket, Group
-from model.session import SessionLocal
-from sqlalchemy.orm import class_mapper, ColumnProperty
-import json
+from model.models import Devices, FailureTicket
 from urllib.parse import urlunparse, urlencode
 from celery.utils.log import get_task_logger
 
@@ -37,8 +34,8 @@ class DevicesOnlineMonitor(BaseMonitor):
 
     def get_monitor_targets(self):
         """获取监控对象"""
-        sql_session = SessionLocal()
-        devices = sql_session.query(Devices).filter(Devices.is_enable == True).all()
+        # sql_session = SessionLocal()
+        devices = self.sql_session.query(Devices).filter(Devices.is_enable == True).all()
         devices_list = [{
             "id": device.id,
             "name": device.name,
@@ -51,7 +48,6 @@ class DevicesOnlineMonitor(BaseMonitor):
             "group_id": device.group_id,
             # "group": device.group,
         } for device in devices]
-        sql_session.close()
         return devices_list
         # return self.get_monitor_objects_data()['devices']
 
@@ -125,49 +121,38 @@ class DevicesOnlineMonitor(BaseMonitor):
                         # return
                     sender().send_recovery_notify(message=msg)
 
-    @staticmethod
-    def query_fault_ticket(msg: dict) -> list:
+    def query_fault_ticket(self, msg: dict) -> list:
         """判断工单是否存在"""
         # logger.info(f"查询故障工单:{msg}")
-        sql_session = SessionLocal()
         ret = []
-        try:
-            device_id = msg.get("id")
-            devices = sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
-                                                              (FailureTicket.is_done != True)).all()
-            if devices:
-                msg["fault_ticket_id"] = devices[0].id
-                ret = devices
-        finally:
-            sql_session.close()
+        device_id = msg.get("id")
+        devices = self.sql_session.query(FailureTicket).filter((FailureTicket.device_id == device_id) &
+                                                               (FailureTicket.is_done != True)).all()
+        if devices:
+            msg["fault_ticket_id"] = devices[0].id
+            ret = devices
         return ret
 
-    @staticmethod
-    def generate_fault_ticket(msg: dict):
+    def generate_fault_ticket(self, msg: dict):
         """生成维护工单,返回工单id"""
-        sql_session = SessionLocal()
         device_id = msg.get("id")
         fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
                                      is_done=False)
-        sql_session.add(fault_ticket)
-        sql_session.commit()
+        self.sql_session.add(fault_ticket)
+        self.sql_session.commit()
         msg["fault_ticket_id"] = fault_ticket.id
-        sql_session.close()
 
     @staticmethod
     def generate_recovery_url():
         """生成恢复url"""
         return "www.baidu.com"
 
-    @staticmethod
-    def remove_fault_ticket(msg: dict, fault_tickets: list):
+    def remove_fault_ticket(self, msg: dict, fault_tickets: list):
         """故障清除"""
-        sql_session = SessionLocal()
         id_list = list(map(lambda x: x.id, fault_tickets))
-        sql_session.query(FailureTicket).filter(FailureTicket.id.in_(id_list)).update(
+        self.sql_session.query(FailureTicket).filter(FailureTicket.id.in_(id_list)).update(
             {"is_done": True, "recovery_time": msg["recovery_time"]})
-        sql_session.commit()
-        sql_session.close()
+        self.sql_session.commit()
 
     @staticmethod
     def generate_fault_url(msg: dict):

@@ -1,6 +1,3 @@
-import logging
-import time
-import requests
 from .BasePlatform import Platform
 from utils.crypto import md5_encrypt
 from celery.utils.log import get_task_logger

@@ -1,7 +1,5 @@
-import calendar
-from model.session import SessionLocal
 from monitor.base import BaseMonitor
-from model.models import IncomeMonitorPlatform, IncomeMonitorServer
+from model.models import IncomeMonitorPlatform
 import importlib
 from celery.utils.log import get_task_logger
 from datetime import datetime, timedelta
@@ -14,14 +12,6 @@ class ServerIncomeMonitor(BaseMonitor):
     def __init__(self):
         super().__init__()
         self.sql_session = None
-
-    def __enter__(self):
-        self.sql_session = SessionLocal()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.sql_session.close()
-        pass
 
     def get_monitor_targets(self) -> list:
         return []
