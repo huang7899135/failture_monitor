@@ -68,13 +68,15 @@ class BaseMonitor(object):
         """发送通知"""
         raise NotImplementedError
 
-    def validate(self, msg: dict) -> dict:
+    @staticmethod
+    def perform_validation(msg: dict, validations: list = None) -> dict:
         """
         验证消息
+        :param validations: 验证器类列表
         :param msg: <dict>,单条的检查结果
         :return:
         """
-        for validation in self.Validations:
+        for validation in validations:
             msg = validation().validate(msg)
         return msg
 
