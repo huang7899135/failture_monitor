@@ -78,7 +78,7 @@ class DevicesOnlineMonitor(BaseMonitor):
                     msg["recipient"] = recipient
                     msg['render_url'] = self.generate_fault_url(msg)
                     try:
-                        msg = self.validate(msg)
+                        msg = self.perform_validation(msg)
                     except BaseValidateError as e:
                         logger.warning(f"验证失败:{e},取消发送")
                         return
@@ -106,7 +106,7 @@ class DevicesOnlineMonitor(BaseMonitor):
                     msg["recipient"] = recipient
                     msg['render_url'] = self.generate_recovery_url(msg)
                     try:
-                        msg = self.validate(msg)
+                        msg = self.perform_validation(msg)
                     except BaseValidateError as e:
                         if not isinstance(e, TimeValidateError):
                             logger.info(f"验证不通过:{e},取消发送")
@@ -115,9 +115,17 @@ class DevicesOnlineMonitor(BaseMonitor):
                         # return
                     sender().send_recovery_notify(message=msg)
 
-    def send_notice(self, msg: dict, customize_personal_message: callable, perform_sender: callable,
-                    exception_handler: callable = None, ):
-        """发送通知"""
+    def send_notice(self, msg: dict, validations: list, customize_personal_message: callable, perform_sender: callable,
+                    exception_handler: callable = None, ) -> None:
+        """
+        发送通知
+        :param msg: 信息载体
+        :param validations: 验证器类列表
+        :param customize_personal_message:自定义用户消息回调函数
+        :param perform_sender: 消息发送回调
+        :param exception_handler:  异常处理回调
+        :return: None
+        """
         group_id = msg.get("group_id")
         recipients = self.get_notify_recipient(group_id)
         # 消息发送器发送消息
@@ -126,7 +134,7 @@ class DevicesOnlineMonitor(BaseMonitor):
                 if recipient.get(sender.name.lower()):
                     msg = customize_personal_message(recipient, msg)
                     try:
-                        msg = self.validate(msg)
+                        msg = self.perform_validation(msg, validations)
                     except Exception as e:
                         error_ret, should_return = exception_handler(e, msg)
                         if should_return:
@@ -155,7 +163,7 @@ class DevicesOnlineMonitor(BaseMonitor):
         msg["fault_ticket_id"] = fault_ticket.id
 
     @staticmethod
-    def generate_recovery_url():
+    def generate_recovery_url(msg: dict):
         """生成恢复url"""
         return "www.baidu.com"
 

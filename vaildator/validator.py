@@ -61,7 +61,6 @@ class UserNotifyFrequencyValidation(BaseValidation):
                                  .filter(UserNotifyFrequency.user_id == user_id,
                                          UserNotifyFrequency.failure_ticket_id == failure_ticket_id)
                                  .first())
-        # if user_notify_frequency.failure_ticket存在
         if user_notify_frequency and user_notify_frequency.failure_ticket:
             logger.warning(f"failure name:{user_notify_frequency.failure_ticket.device.name}, ticket id:{failure_ticket_id}")
         if user_notify_frequency:
