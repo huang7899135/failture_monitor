@@ -11,7 +11,7 @@ class BaseMonitor(object):
 
     def __init__(self):
         self.send_group = None
-        self.Validations = [TimeValidation, UserNotifyFrequencyValidation]
+        self.FAULTVALIDATORS = [TimeValidation, UserNotifyFrequencyValidation]
         self.message_sender = [WeChatTemplateMessage]
         self.sql_session = None
 

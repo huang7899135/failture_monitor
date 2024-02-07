@@ -78,7 +78,7 @@ class DevicesOnlineMonitor(BaseMonitor):
                     msg["recipient"] = recipient
                     msg['render_url'] = self.generate_fault_url(msg)
                     try:
-                        msg = self.perform_validation(msg)
+                        msg = self.perform_validation(msg, self.FAULTVALIDATORS)
                     except BaseValidateError as e:
                         logger.warning(f"验证失败:{e},取消发送")
                         return
