@@ -41,10 +41,7 @@ class TimeValidation(BaseValidation):
 
 class UserNotifyFrequencyValidation(BaseValidation):
     """稍后回复限制"""
-
-    # FIXME: 再celery查询出的user_notify_frequency跟最新的值不一致?
     def validate(self, message):
-
         if not hasattr(message, "get"):
             logger.error(f"message:{message} is not dict")
             return message
@@ -61,8 +58,6 @@ class UserNotifyFrequencyValidation(BaseValidation):
                                  .filter(UserNotifyFrequency.user_id == user_id,
                                          UserNotifyFrequency.failure_ticket_id == failure_ticket_id)
                                  .first())
-        if user_notify_frequency and user_notify_frequency.failure_ticket:
-            logger.warning(f"failure name:{user_notify_frequency.failure_ticket.device.name}, ticket id:{failure_ticket_id}")
         if user_notify_frequency:
             next_notify_time = user_notify_frequency.next_notify_time
             current_time = datetime.now()

@@ -76,6 +76,8 @@ class BaseMonitor(object):
         :param msg: <dict>,单条的检查结果
         :return:
         """
+        if not validations:
+            return msg
         for validation in validations:
             msg = validation().validate(msg)
         return msg
