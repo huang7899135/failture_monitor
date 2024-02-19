@@ -92,7 +92,7 @@ class DeviceOnlineChecker:
     def __check_via_icmp(self):
         """利用ping的请求,来检测是否在线"""
         try:
-            subprocess.run(["ping", "-c", "3", self.address], stdout=subprocess.DEVNULL,
+            subprocess.run(["ping", "-c", "4", self.address], stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, check=True)
             return True  # 通
         except subprocess.CalledProcessError:
@@ -121,7 +121,6 @@ class DeviceOnlineChecker:
         except requests.exceptions.ConnectionError:
             return False  # 不通
 
-    @property
     def __check_method_func(self):
         if self.check_method == "icmp":
             return self.__check_via_icmp
@@ -157,33 +156,32 @@ def perform_async_check_devices(target_list: list) -> tuple:
 
 if __name__ == "__main__":
     import os
-    from utils.logger import setup_logger
+    # from utils.logger import setup_logger
+    from pprint import pprint
 
     os.environ['APP_ENV'] = "dev"
-    logger = setup_logger()
+    # logger = setup_logger()
     s = time.time()
-    ip_list = []
-    # for i in range(0, 20):  # 3rd octet
-    #     for j in range(1, 256):  # 4th octet
-    #         ip = f"117.176.{i}.{j}"
-    #         ip_list.append({
-    #             "check_method": "tcp",
-    #             "address": ip,
-    #             "port": 22})
-    target = [
-        {"check_method": "icmp", "address": "223.87.234.3"},
-        {"check_method": "icmp", "address": "223.87.234.2"},
-        {"check_method": "icmp", "address": "223.87.234.4"},
-        {"check_method": "icmp", "address": "223.87.234.5"},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 22},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 50000},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 7000},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 7002},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 7003},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 6700},
-        {"check_method": "tcp", "address": "117.176.217.131", "port": 25},
+    ip_string = '''
+    117.173.190.36
+    117.173.190.37
+    112.44.207.173
+    112.44.207.137
+    117.173.190.134
+    112.44.207.157
+    117.173.190.94
+    117.173.190.46
+    112.44.207.145
+    112.44.207.147
+    112.44.207.144
+    112.44.207.104
+    117.173.190.54
+    112.44.207.194
 
-    ]
+    '''
+    ip_list = ip_string.strip().split("\n")
+    target = [{"check_method": "icmp", "address": ip} for ip in ip_list]
     ret = perform_async_check_devices(target)
+    pprint(ret)
     # print(ret)
     # print(time.time() - s)

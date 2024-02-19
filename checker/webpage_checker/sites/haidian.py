@@ -111,7 +111,7 @@ class HaiDian(Billing95PercentilePlatform):
             device_status = server.get("device_status")
             yesterday_profit = server.get("yesterday_profit")
             remark = server.get("remark")
-            description = ""
+            exception_type = ""
             expected_income = bandwidth * 1 / self.get_current_month_days()
             if device_obj:
                 if not device_obj.is_enable:
@@ -120,22 +120,22 @@ class HaiDian(Billing95PercentilePlatform):
                     expected_income = device_obj.expected_income
             if device_status != "0":
                 flat = True
-                description = f"设备状态异常"
+                exception_type = f"设备状态异常"
 
             if expected_income > yesterday_profit:
                 flat = True
                 # 如果description不为空则加入新加一行到底部
-                if description:
-                    description += f"\n昨日收入{yesterday_profit}元"
+                if exception_type:
+                    exception_type += f"\n昨日收入{yesterday_profit}元"
                 else:  # 否则直接赋值
-                    description = f"昨日收入{yesterday_profit}元"
+                    exception_type = f"昨日收入{yesterday_profit}元"
             if flat:
                 logger.debug(f"haidian:{device_sn}:({remark})异常,昨日收入{yesterday_profit}元,预期收入{expected_income}元")
                 problem_servers.append({
-                    "device_sn": device_sn,
-                    "description": description,
+                    "exception_type": "服务器收入异常",
+                    "exception_reason": "income值低于expected值",
                     "group_id": 6,  # device_obj.group_id,  # FIXME:想想一下该确定发送对象,每个设备都加入group_id吗?还是提供一个默认的groupid
-                    "remark": remark
+                    "equipment_name": remark
                 })
         normal_servers = list(filter(lambda x: x not in problem_servers, income_info))
         return {

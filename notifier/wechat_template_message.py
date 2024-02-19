@@ -153,26 +153,25 @@ class WeChatTemplateMessage(Notifier):
         }
         return self.__send_messages(to_user, template_id, render_url, template_data)
 
-    def send_abnormal_equipment_notification(self, to_user, render_url, equipment_type, equipment_name, fault_date,
-                                             fault_location, fault_reason):
+    def send_equipment_exception_notification(self, to_user, render_url, exception_type, exception_time,
+                                              exception_reason, equipment_name):
         """
         发送设备异常通知
         :param to_user:
-        :param render_url:
-        :param equipment_type:
-        :param equipment_name:
-        :param fault_date:
-        :param fault_location:
-        :param fault_reason:
-        :return:
+        :param render_url: 通知跳转的url
+        :param exception_type: 异常类型
+        :param exception_time: 异常事件
+        :param exception_reason: 异常原因,常量(income值低于expected值,服务器疑似被下架或者离线)
+        :param equipment_name: 设备名称
+        :return: None
         """
-        template_id = "Kgf4u_rucA5fp6qE3Q2p9GR05nlKCJdEdJTeTnkli90"
+
+        template_id = "U-vP_5jL2QcdelK0q0FQ6F0uaFphGDYMxrArP8OXLNQ"
         template_data = {
-            "thing4": {"value": equipment_type},  # 设备类型
-            "thing8": {"value": "equipment_name"},  # 设备名
-            "time9": {"value": fault_date},  # 故障日期
-            "thing11": {"value": fault_location},  # 故障地点
-            "thing6": {"value": fault_reason},  # 故障原因
+            "thing5": {"value": exception_type},  # 异常类型
+            "time6": {"value": exception_time},  # 异常时间
+            "const7": {"value": exception_reason},  # income值低于expected值;服务器疑似被下架或者离线
+            "thing9": {"value": equipment_name}
         }
         return self.__send_messages(to_user, template_id, render_url, template_data)
 

@@ -1,6 +1,6 @@
 from model.models import Group
 from model.session import SessionLocal
-from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation, TimeValidateError
+from vaildator.validator import TimeValidation, UserNotifyFrequencyValidation, MessageReadValidation
 from notifier.wechat_template_message import WeChatTemplateMessage
 from celery.utils.log import get_task_logger
 
@@ -11,7 +11,7 @@ class BaseMonitor(object):
 
     def __init__(self):
         self.send_group = None
-        self.FAULTVALIDATORS = [TimeValidation, UserNotifyFrequencyValidation]
+        self.FAULTVALIDATORS = [TimeValidation, MessageReadValidation, UserNotifyFrequencyValidation, ]
         self.message_sender = [WeChatTemplateMessage]
         self.sql_session = None
 
@@ -63,8 +63,7 @@ class BaseMonitor(object):
         """
         raise NotImplementedError
 
-    def send_notice(self, msg: dict, customize_personal_message: callable, exception_handler: callable,
-                    perform_sender: callable):
+    def send_notice(self, *args, **kwargs):
         """发送通知"""
         raise NotImplementedError
 

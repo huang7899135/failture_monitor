@@ -21,8 +21,8 @@ def test_baishan_account():
 
 
 def test_node_recover():
-    client = Baishan("vision_blue")
-    # client = Baishan("yicheng")
+    # client = Baishan("vision_blue")
+    client = Baishan("yicheng")
     client.init()
     client.auto_recover_node_in_node_failure()
 
@@ -38,10 +38,10 @@ def test_rack_mounting():
                                            "ipv4", "ipv6", "remark")
 
 
-def test_haidian():
-    with HaiDian() as haidian:
-        ret = haidian.perform_income_check()
-        pprint(ret)
+# def test_haidian():
+#     with HaiDian() as haidian:
+#         ret = haidian.perform_income_check()
+#         pprint(ret)
 
 
 def test_openfog():
@@ -52,8 +52,8 @@ def test_openfog():
 
 
 def test_device_online_monitor():
-    monitor = DevicesOnlineMonitor()
-    monitor.run()
+    with DevicesOnlineMonitor() as monitor:
+        monitor.run()
 
 
 def test_bug():
@@ -83,15 +83,17 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    test_baishan_account()
+    # test_baishan_account()
 
-    # test_haidian()
     # server_income_monitor()
     # test_openfog()
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    # while True:
-    # test_device_online_monitor()
-    #     time.sleep(5)
+    while True:
+        test_device_online_monitor()
+        time.sleep(5)
     # test_bug()
+
+    # server_income_monitor()
+

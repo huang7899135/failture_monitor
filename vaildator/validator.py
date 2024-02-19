@@ -66,3 +66,27 @@ class UserNotifyFrequencyValidation(BaseValidation):
                 raise UserNotifyFrequencyValidateError("延迟发送")
         sql_session.close()
         return message
+
+
+class MessageReadValidation(BaseValidation):
+    """消息是否已读"""
+    # 查询UserNotifyFrequency的message_is_read字段,如果为True,且当前时间不属于整点到整点+5分钟的时间段内,则抛出异常
+    def validate(self, message):
+        if not hasattr(message, "get"):
+            logger.error(f"message:{message} is not dict")
+            return message
+        failure_ticket_id = message.get("fault_ticket_id")
+        if not failure_ticket_id:
+            return message
+        sql_session = SessionLocal()
+        sql_session.expire_all()
+        user_notify_frequency = (sql_session.query(UserNotifyFrequency)
+                                 .filter(UserNotifyFrequency.failure_ticket_id == failure_ticket_id)
+                                 .first())
+        if user_notify_frequency:
+            message_is_read = user_notify_frequency.message_is_read
+            current_time = datetime.now()
+            if message_is_read and current_time.minute > 6:
+                raise UserNotifyFrequencyValidateError("消息已读,下一个整点再发送")
+        sql_session.close()
+        return message

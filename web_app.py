@@ -5,6 +5,7 @@ from model.models import FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
 from utils.logger import setup_logger
+
 logger = setup_logger()
 # from celery.utils.log import get_task_logger
 
@@ -30,6 +31,18 @@ def index():
         if not failure_ticket:
             # FIXME:为什么会出现failure_ticket 不存在的情况
             return {"code": 1, "msg": "failure_ticket_id不存在"}
+        # 查询是否有将对应的UserNotifyFrequency如果没有则创建,并将message_is_read字段置为True,表示已读
+        # 如果有则将message_is_read字段置为True,表示已读
+        user_notify_frequency_obj = sql_session.query(UserNotifyFrequency).filter(
+            (UserNotifyFrequency.user_id == user_id) & (
+                    UserNotifyFrequency.failure_ticket_id == failure_ticket_id)).first()
+        if user_notify_frequency_obj:
+            user_notify_frequency_obj.message_is_read = True
+        else:
+            user_notify_frequency_obj = UserNotifyFrequency(user_id=user_id, failure_ticket_id=failure_ticket_id,
+                                                            message_is_read=True)
+            sql_session.add(user_notify_frequency_obj)
+        sql_session.commit()
         data = {
             "device_name": failure_ticket.device.name,
             "location": failure_ticket.device.location,
@@ -115,7 +128,7 @@ def user_notify_frequency():
             # 查找是否有对应的UserNotifyFrequency对象
             user_notify_frequency_obj = sql_session.query(UserNotifyFrequency).filter(
                 (UserNotifyFrequency.user_id == user_id) & (
-                            UserNotifyFrequency.failure_ticket_id == failure_ticket_id)).first()
+                        UserNotifyFrequency.failure_ticket_id == failure_ticket_id)).first()
             if user_notify_frequency_obj:
                 user_notify_frequency_obj.next_notify_time = next_notify_time
             else:

@@ -56,10 +56,8 @@ class FailureTicket(Base):
     __tablename__ = 'failure_tickets'
 
     id = Column(Integer, Sequence('failure_ticket_id_seq'), primary_key=True)
-    # 是否受理
-    is_accepted = Column(Boolean, default=True, nullable=True)
-    # 处理完毕
-    is_done = Column(Boolean, default=True, nullable=True)
+    is_accepted = Column(Boolean, default=True, nullable=True)  # 是否受理
+    is_done = Column(Boolean, default=True, nullable=True)  # 是否处理完成
     device_id = Column(Integer, ForeignKey('devices.id'), nullable=True)
     device = relationship('Devices', backref='failure_tickets')
     platform_account = Column(String(50), nullable=True)
@@ -81,6 +79,7 @@ class UserNotifyFrequency(Base):
     user = relationship('User', backref='user_notify_configurations')
     failure_ticket_id = Column(Integer, ForeignKey('failure_tickets.id'))
     failure_ticket = relationship('FailureTicket', backref='user_notify_configurations')
+    message_is_read = Column(Boolean, default=False, nullable=True)
     next_notify_time = Column(DateTime)
 
 

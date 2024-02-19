@@ -8,18 +8,18 @@ logger = get_task_logger(__name__)
 
 
 class ServerIncomeMonitor(BaseMonitor):
-
-    def __init__(self):
-        super().__init__()
-        self.sql_session = None
+    """
+    服务器收入监控
+    需要在IncomeMonitorPlatform表中添加需要监控的类名
+    """
 
     def get_monitor_targets(self) -> list:
         return []
 
     def get_monitor_target_class(self) -> list:
         """
-        遍历IncomeMonitorPlatform,找出寻找同名的platform类
-        :return:webpage_checker.sites下的需要监控的类
+        从数据库中遍历IncomeMonitorPlatform,找出寻找同名的platform类
+        :return:checker.webpage_checker.sites下的需要监控的类
         """
         monitor_platform_list = self.sql_session.query(IncomeMonitorPlatform).filter(
             IncomeMonitorPlatform.is_enable == True).all()
@@ -61,16 +61,14 @@ class ServerIncomeMonitor(BaseMonitor):
                 user_value = recipient.get(sender.name.lower())
                 if user_value:
                     # TODO:微信模板消息服务器收入异常
-                    sender().send_abnormal_equipment_notification(
+                    sender().send_equipment_exception_notification(
                         to_user=user_value,
                         render_url=msg.get('render_url', "www.baidu.com"),
-                        equipment_type=msg.get("equipment_type", "服务器"),
-                        equipment_name=msg.get("device_sn", "未知"),
-                        fault_date=msg.get("fault_time", (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")),
-                        fault_location=msg.get("location", "未知"),
-                        fault_reason=msg.get("description", "未知")
+                        exception_type=msg.get("exception_type", "服务器收入异常告警"),
+                        exception_time=msg.get("exception_time", (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")),
+                        exception_reason=msg.get("exception_reason", "未知"),
+                        equipment_name=msg.get("equipment_name", "未知")
                     )
-                    # sender().send_network_anomaly_notification(message=msg)
 
     def analyze_message_and_send_notify(self, msg: dict) -> None:
         """
