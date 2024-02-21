@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from model.session import SessionLocal
 from model.models import UserNotifyFrequency, FailureTicket
 from celery.utils.log import get_task_logger
+from config.setting import DEVICE_ONLINE_MONITOR_INTERVAL
 
 logger = get_task_logger(__name__)
 # logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ class MessageReadValidation(BaseValidation):
         if user_notify_frequency:
             message_is_read = user_notify_frequency.message_is_read
             current_time = datetime.now()
-            if message_is_read and current_time.minute > 6:
+            if message_is_read and current_time.minute > (DEVICE_ONLINE_MONITOR_INTERVAL / 60 + 2):
                 raise UserNotifyFrequencyValidateError("消息已读,下一个整点再发送")
         sql_session.close()
         return message

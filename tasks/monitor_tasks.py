@@ -7,7 +7,7 @@ app.config_from_object('config.celery_config')
 
 
 @app.task
-def device_checker():
+def device_online_monitor():
     """设备检测"""
     with DevicesOnlineMonitor() as monitor:
         monitor.run()
