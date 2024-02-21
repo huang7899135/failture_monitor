@@ -279,6 +279,7 @@
     });
     $('#never-send').on('click', function () {
         // let next_time = new Date(9999, 12, 31);
+        let now = new Date();
         let next_time = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
         sent_next_time(next_time);
     });
