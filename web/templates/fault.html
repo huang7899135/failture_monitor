@@ -156,10 +156,10 @@
     <div class="weui-mask" id="mask" style="display: none;"></div>
     <div class="weui-actionsheet" id="weui_actionsheet">
         <div class="weui-actionsheet__menu">
-<!--            <div class="weui-actionsheet__cell" id="send-in-hour">1个小时</div>-->
+            <!--            <div class="weui-actionsheet__cell" id="send-in-hour">1个小时</div>-->
             <div class="weui-actionsheet__cell" id="no-send-today">今日内不再发送</div>
             <div class="weui-actionsheet__cell" id="never-send">停止发送</div>
-<!--            <div class="weui-actionsheet__cell" id="showDatePicker">手动选择发送时间</div>-->
+            <!--            <div class="weui-actionsheet__cell" id="showDatePicker">手动选择发送时间</div>-->
         </div>
         <div class="weui-actionsheet__action">
             <div class="weui-actionsheet__cell" id="actionsheet_cancel">取消</div>
@@ -278,7 +278,8 @@
         sent_next_time(next_time);
     });
     $('#never-send').on('click', function () {
-        let next_time = new Date(9999, 12, 31);
+        // let next_time = new Date(9999, 12, 31);
+        let next_time = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
         sent_next_time(next_time);
     });
 </script>
