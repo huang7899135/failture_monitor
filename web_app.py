@@ -15,7 +15,7 @@ app = Flask(__name__, template_folder='web/templates', static_folder='web/static
 
 
 @app.route('/device_failure', methods=['GET'])
-def index():
+def device_failure():
     """用户故障通知视图"""
     sql_session = SessionLocal()
     user_id = request.args.get('user_id')
@@ -68,7 +68,7 @@ def index():
 
 
 @app.route('/device_failure', methods=['POST'])
-def index2():
+def device_failure():
     """
     将故设备故障单的is_accepted字段置为True,并将处理人设置为当前用户
     :return:
@@ -93,7 +93,6 @@ def index2():
 def user_notify_frequency():
     """
     修改用户通知频率,处理1小时后发送,当日不发送,自定义时间后发送,和不发送
-    不发送将设置devcie的is_effective字段为False
     其他情况设置UserNotifyFrequency的next_notify_time时间,并由UserNotifyFrequencyValidation检测是否符合next_notify_time条件
     :return:
     """

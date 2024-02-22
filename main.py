@@ -52,8 +52,10 @@ def test_openfog():
 
 
 def test_device_online_monitor():
-    with DevicesOnlineMonitor() as monitor:
-        monitor.run()
+    while True:
+        with DevicesOnlineMonitor() as monitor:
+            monitor.run()
+        time.sleep(10)
 
 
 def test_bug():
@@ -90,10 +92,8 @@ if __name__ == "__main__":
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    while True:
-        test_device_online_monitor()
-        time.sleep(5)
+    # test_device_online_monitor()
     # test_bug()
 
-    # server_income_monitor()
+    server_income_monitor()
 

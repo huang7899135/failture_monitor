@@ -1,6 +1,7 @@
 from celery import Celery
 from monitor.device_online_monitor import DevicesOnlineMonitor
 from checker.webpage_checker.sites.baishan import Baishan
+from monitor.server_income_monitor import ServerIncomeMonitor
 
 app = Celery('pcdn_monitor')
 app.config_from_object('config.celery_config')
@@ -37,3 +38,9 @@ def yicheng_auto_recover_nodes():
 def vision_blue_auto_recover_nodes():
     with Baishan("vision_blue") as vision_blue:
         vision_blue.auto_recover_node_in_node_failure()
+
+
+@app.task
+def server_income_monitor():
+    with ServerIncomeMonitor() as monitor:
+        monitor.run()
