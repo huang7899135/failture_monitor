@@ -4,13 +4,13 @@ from model.models import IncomeMonitorServer
 from .BasePlatform import Billing95PercentilePlatform
 from celery.utils.log import get_task_logger
 
-
 logger = get_task_logger(__name__)
 
 
 class HaiDian(Billing95PercentilePlatform):
     def __init__(self):
         super().__init__()
+        self.platform_cn_name = "海点云"
         self.token = self.load_token()
 
     def _login(self, *args, **kwargs):
@@ -100,6 +100,10 @@ class HaiDian(Billing95PercentilePlatform):
             "problem_servers": [],
             "normal_servers": []}
         """
+        exception_map = {
+            "设备状态异常": "服务器疑似被下架或者离线",
+            "设备收入异常": "income值低于expected值"
+        }
         problem_servers = []
         for server in income_info:
             flat = False
@@ -125,17 +129,18 @@ class HaiDian(Billing95PercentilePlatform):
             if expected_income > yesterday_profit:
                 flat = True
                 # 如果description不为空则加入新加一行到底部
-                if exception_type:
-                    exception_type += f"\n昨日收入{yesterday_profit}元"
-                else:  # 否则直接赋值
-                    exception_type = f"昨日收入{yesterday_profit}元"
+
+                exception_type = f"设备收入异常"
+
             if flat:
-                logger.debug(f"haidian:{device_sn}:({remark})异常,昨日收入{yesterday_profit}元,预期收入{expected_income}元")
+                logger.debug(
+                    f"haidian:{device_sn}:({remark})异常,昨日收入{yesterday_profit}元,预期收入{expected_income}元")
                 problem_servers.append({
-                    "exception_type": "服务器收入异常",
-                    "exception_reason": "income值低于expected值",
-                    "group_id": 6,  # device_obj.group_id,  # FIXME:想想一下该确定发送对象,每个设备都加入group_id吗?还是提供一个默认的groupid
-                    "equipment_name": remark
+                    "exception_type": exception_type,
+                    "exception_reason": exception_map.get(exception_type, None),
+                    # 如果没有device_obj.group_id则为1
+                    "group_id": device_obj.group_id if device_obj else 1,
+                    "equipment_name": f"{self.platform_cn_name}:{remark}"
                 })
         normal_servers = list(filter(lambda x: x not in problem_servers, income_info))
         return {
