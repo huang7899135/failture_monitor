@@ -130,7 +130,7 @@ class HaiDian(Billing95PercentilePlatform):
                 flat = True
                 # 如果description不为空则加入新加一行到底部
 
-                exception_type = f"设备收入异常"
+                exception_type = f"设备收入异常:{int(yesterday_profit)}<{int(expected_income)}"
 
             if flat:
                 logger.debug(
