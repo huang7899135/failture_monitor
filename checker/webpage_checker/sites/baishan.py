@@ -695,9 +695,12 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    baishan = Baishan("yicheng")
-    baishan.init()
+    # baishan = Baishan("yicheng")
+    # baishan.init()
     # baishan = Baishan("vision_blue")
     # 自动拨号
-    baishan.auto_recover_accounts_in_account_failure()
+    # baishan.auto_recover_accounts_in_account_failure()
     # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
+    with Baishan("yicheng") as baishan:
+        servers = baishan.query_faulty_servers()
+        pprint(servers)

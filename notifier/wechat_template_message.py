@@ -175,6 +175,29 @@ class WeChatTemplateMessage(Notifier):
         }
         return self.__send_messages(to_user, template_id, render_url, template_data)
 
+    def send_equipment_inspection_notification(self, to_user, render_url, equipment_name, equipment_type,
+                                               reason_for_generation,inspection_time, status_code):
+        """
+        发送设备巡检通知
+        :param to_user: 发送对象
+        :param render_url: 模板消息跳转的url
+        :param equipment_name: 设备名称
+        :param equipment_type: 设备类型
+        :param reason_for_generation: 生成原因
+        :param inspection_time: 巡检时间
+        :param status_code: 状态码
+        :return:
+        """
+        template_id = "Kgf4u_rucA5fp6qE3Q2p9Ersn7EwDWM6B5gNVUi9M_A"
+        template_data = {
+            "thing8": {"value": equipment_name},  # 设备名称
+            "thing4": {"value": equipment_type},  # 异常时间
+            "thing6": {"value": reason_for_generation},  # income值低于expected值;服务器疑似被下架或者离线
+            "time9": {"value": inspection_time},
+            "character_string12": {"value": status_code}
+        }
+        return self.__send_messages(to_user, template_id, render_url, template_data)
+
     def send_fault_notify(self, message: dict):
         """发送故障通知"""
         to_user = message.get("recipient").get(self.name.lower())

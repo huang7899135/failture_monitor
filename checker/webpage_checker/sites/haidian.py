@@ -122,15 +122,16 @@ class HaiDian(Billing95PercentilePlatform):
                     continue
                 if device_obj.expected_income:
                     expected_income = device_obj.expected_income
-            if device_status != "0":
-                flat = True
-                exception_type = f"设备状态异常"
 
             if expected_income > yesterday_profit:
                 flat = True
                 # 如果description不为空则加入新加一行到底部
 
                 exception_type = f"设备收入异常:{int(yesterday_profit)}<{int(expected_income)}"
+
+            if device_status != "0":
+                flat = True
+                exception_type = f"设备状态异常:{int(yesterday_profit)}<{int(expected_income)}"
 
             if flat:
                 logger.debug(
