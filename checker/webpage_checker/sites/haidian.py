@@ -12,6 +12,7 @@ class HaiDian(Billing95PercentilePlatform):
         super().__init__()
         self.platform_cn_name = "海点云"
         self.token = self.load_token()
+        self.number_of_servers_per_page = 10
 
     def _login(self, *args, **kwargs):
         self.before_login()
@@ -75,13 +76,40 @@ class HaiDian(Billing95PercentilePlatform):
 
         return value_in_mb
 
-    def query_server_income_info(self) -> list:
-        """查询服务器收入状态"""
-        query_url = "https://s.haidiancloud.com/pcdnmapi/s2060"
+    def query_servers_number(self) -> int:
+        """
+        查询服务器数量
+        :return: 服务器数量
+        """
+        query_url = "https://s.haidiancloud.com/pcdnmapi/s20602"
         query_data = {
             "owner_name": self.login_info["username"],
-            "offset": "0",
+            "token": self.token
+        }
+        resp = self._fetch(query_url, json=query_data)
+        logger.debug(resp.json())
+        if resp.json().get("status") == 0:
+            return int(resp.json().get("result").get("all_num"))
+        else:
+            logger.error(f"haidian:{resp.json().get('msg')}")
+            raise Exception(resp.json().get('msg'))
+
+    def calculate_query_offset(self) -> int:
+        """
+        计算翻页数量
+        :return:
+        """
+        servers_number = self.query_servers_number()
+        return servers_number // self.number_of_servers_per_page + 1
+
+    def _query_server_income_info(self, offset: int) -> list:
+        """查询服务器收入状态"""
+        query_url = "https://s.haidiancloud.com/pcdnmapi/s20601"
+        query_data = {
+            "owner_name": self.login_info["username"],
+            "offset": offset,
             "search_word": "",
+            "status_val": 1,
             "token": self.token
         }
         resp = self._fetch(query_url, json=query_data)
@@ -91,6 +119,14 @@ class HaiDian(Billing95PercentilePlatform):
         else:
             logger.error(f"haidian:{resp.json().get('msg')}")
             raise Exception(resp.json().get('msg'))
+
+    def query_server_income_info(self) -> list:
+        """查询服务器收入状态"""
+        offset = self.calculate_query_offset()
+        income_info = []
+        for i in range(1, offset + 1):
+            income_info.extend(self._query_server_income_info(i))
+        return income_info
 
     def analyze_server_income(self, income_info: list):
         """
@@ -149,12 +185,12 @@ class HaiDian(Billing95PercentilePlatform):
             "normal_servers": normal_servers
         }
 
-    # def auto_check_server_revenue(self):
-    #     """自动检查服务器收益"""
-    #     server_info = self.query_server_revenue_status()
-    #     problem_servers = self.analyze_server_income(server_info)["problem_servers"]
-    #     if problem_servers:
-    #         recipients = self.query_recipients()
-    #         # self.send_wechat_message(problem_servers)
-    #     else:
-    #         logger.debug("haidian:服务器收益正常")
+# def auto_check_server_revenue(self):
+#     """自动检查服务器收益"""
+#     server_info = self.query_server_revenue_status()
+#     problem_servers = self.analyze_server_income(server_info)["problem_servers"]
+#     if problem_servers:
+#         recipients = self.query_recipients()
+#         # self.send_wechat_message(problem_servers)
+#     else:
+#         logger.debug("haidian:服务器收益正常")
