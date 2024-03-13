@@ -128,7 +128,7 @@ class HaiDian(Billing95PercentilePlatform):
             income_info.extend(self._query_server_income_info(i))
         return income_info
 
-    def analyze_server_income(self, income_info: list):
+    def analyze_server_income(self, income_info: list) -> dict:
         """
         分析服务器收益
         :param income_info: 从query_server_revenue_status获取的服务器信息
@@ -185,12 +185,3 @@ class HaiDian(Billing95PercentilePlatform):
             "normal_servers": normal_servers
         }
 
-# def auto_check_server_revenue(self):
-#     """自动检查服务器收益"""
-#     server_info = self.query_server_revenue_status()
-#     problem_servers = self.analyze_server_income(server_info)["problem_servers"]
-#     if problem_servers:
-#         recipients = self.query_recipients()
-#         # self.send_wechat_message(problem_servers)
-#     else:
-#         logger.debug("haidian:服务器收益正常")
