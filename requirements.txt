@@ -1,7 +1,7 @@
 requests~=2.31.0
 celery~=5.3.4
 pyyaml~=6.0.1
-aiohttp~=3.8.5
+aiohttp~=3.9.3
 aioping~=0.4.0
 urllib3~=1.26.16
 sqlalchemy~=2.0.21
@@ -10,5 +10,5 @@ pymysql~=1.1.0
 redis~=5.0.0
 pytz~=2023.3.post1
 pymysql~=1.1.0
-
+pycryptodomex~=3.20.0
 netifaces~=0.11.0

@@ -1,4 +1,5 @@
-from pprint import pprint
+import os
+import sys
 from model.models import IncomeMonitorServer
 from .BasePlatform import Billing95PercentilePlatform
 from utils.crypto import md5_encrypt
@@ -7,6 +8,8 @@ from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
 # logger = logging.getLogger(__name__)
+# 因为本模块涉及动态被引入,考虑到path的情况,需要将项目绝对路径引入sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class ManXing(Billing95PercentilePlatform):
@@ -109,7 +112,6 @@ class ManXing(Billing95PercentilePlatform):
                 if not device_obj.is_enable:
                     continue
             if server['status_id'] != 1:
-
                 problem_servers.append({
                     "exception_type": f"服务器{server['status']}",
                     "exception_reason": "服务器疑似被下架或者离线",
@@ -122,8 +124,6 @@ class ManXing(Billing95PercentilePlatform):
             "problem_servers": problem_servers,
             "normal_servers": []
         }
-
-
 
 
 if __name__ == "__main__":
