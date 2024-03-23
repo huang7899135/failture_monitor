@@ -18,26 +18,39 @@ def device_online_monitor():
 def yicheng_auto_recover_accounts():
     """白山自动恢复账号故障"""
     with Baishan("yicheng") as yicheng:
-        yicheng.auto_recover_accounts_in_account_failure()
+        yicheng.auto_recover_accounts()
 
 
 @app.task
 def vision_blue_auto_recover_accounts():
     with Baishan("vision_blue") as vision_blue:
-        vision_blue.auto_recover_accounts_in_account_failure()
+        vision_blue.auto_recover_accounts()
 
 
 @app.task
 def yicheng_auto_recover_nodes():
     """白山自动恢复节点故障"""
     with Baishan("yicheng") as yicheng:
-        yicheng.auto_recover_node_in_node_failure()
+        yicheng.auto_recover_nodes()
 
 
 @app.task
 def vision_blue_auto_recover_nodes():
     with Baishan("vision_blue") as vision_blue:
-        vision_blue.auto_recover_node_in_node_failure()
+        vision_blue.auto_recover_nodes()
+
+
+@app.task
+def yicheng_auto_recover_servers():
+    """白山自动恢复服务器故障"""
+    with Baishan("yicheng") as yicheng:
+        yicheng.auto_recover_servers()
+
+
+@app.task
+def vision_blue_auto_recover_servers():
+    with Baishan("vision_blue") as vision_blue:
+        vision_blue.auto_recover_servers()
 
 
 @app.task

@@ -4,6 +4,8 @@ from celery.utils.log import get_task_logger
 import os
 
 logger = get_task_logger(__name__)
+
+
 # logger = logging.getLogger(__name__)
 
 
@@ -181,7 +183,7 @@ class Baishan(Platform):
         return result
 
     @staticmethod
-    def _filter_account_for_stress_test_in_node_failure(data: list) -> list:
+    def _filter_account_for_stress_test(data: list) -> list:
         """
         遍历data中的账号,如果dial_status为2,就将符合条件的账号组成一个账号列表返回
         :param data: 节点下的故障账号
@@ -240,7 +242,7 @@ class Baishan(Platform):
         else:
             raise Exception({"accounts": account_list, "msg": resp.json()['msg']})
 
-    def query_faulty_servers(self) -> dict:
+    def query_faulty_servers(self) -> list:
         """查询故障服务器"""
         query_data = {
             "query": "query($id: String $node_name: String,$push_fault_type: [Int],$hostname: String,$start_time: "
@@ -350,7 +352,7 @@ class Baishan(Platform):
             raise Exception(resp.json()['msg'])
 
     @staticmethod
-    def check_recovery_conditions_in_node_failure(data: list) -> bool:
+    def evaluate_recovery_conditions_in_node_failure(data: list) -> bool:
         """
         检查list的item里面的check_status是否等于1,如果等于1就是检测合格了,如果主要item的check_status等于1的数量大于list的60%,就满足恢复条件
         :param data:
@@ -359,13 +361,13 @@ class Baishan(Platform):
         is_checked_servers = list(filter(lambda x: x['check_status'] == 1, data))
         return len(is_checked_servers) / len(data) >= 0.6
 
-    def perform_connectivity_check_in_node_failure(self, faulty_server_id_list: list) -> dict:
+    def perform_server_connectivity_checking(self, fault_ids: list) -> dict:
         """执行连通性检测"""
         query_data = {
             "query": "mutation _ (\n        $ids: [Int]\n    ) {\n        faultSvrDetective(\n            ids: $ids\n "
                      "       )\n    }\n",
             "variables": {
-                "ids": faulty_server_id_list
+                "ids": fault_ids
             }
         }
         resp = self._fetch(url=self.query_url, json=query_data)
@@ -374,13 +376,13 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def perform_hardware_checking_in_node_failure(self, faulty_server_id_list: list) -> dict:
+    def perform_server_hardware_checking(self, fault_ids: list) -> dict:
         """执行硬件检测"""
         query_data = {
             "query": "mutation _ (\n    $fault_order_ids:[Int]!\n){\n    faultSvrHardwareDetection(\n        "
                      "fault_order_ids:$fault_order_ids\n    )\n}\n",
             "variables": {
-                "fault_order_ids": faulty_server_id_list
+                "fault_order_ids": fault_ids
             }
         }
         resp = self._fetch(url=self.query_url, json=query_data)
@@ -418,7 +420,7 @@ class Baishan(Platform):
         # 1,先查询节点下的故障账号的状态
         account_status = self.query_account_status_in_node_failure(node_feedback_id)
         # 2,整理可以压测的账号
-        accounts_id_for_stress_test = self._filter_account_for_stress_test_in_node_failure(account_status)
+        accounts_id_for_stress_test = self._filter_account_for_stress_test(account_status)
 
         query_data = {
             "query": "mutation _ (\n        $fault_receipt_id: Int,\n        $fault_svr_order_ids: [Int],\n        "
@@ -505,7 +507,7 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def auto_recover_node_in_node_failure(self) -> None:
+    def auto_recover_nodes(self) -> None:
         """
         自动恢复节点
         :return:
@@ -518,9 +520,9 @@ class Baishan(Platform):
             faulty_servers = self.query_faulty_servers_in_node_failure(node['id'])
             faulty_server_ids = list(map(lambda x: x.get("id"), faulty_servers))
             # 4,执行连通性检测
-            self.perform_connectivity_check_in_node_failure(faulty_server_ids)
+            self.perform_server_connectivity_checking(faulty_server_ids)
             # 5,执行硬件检测
-            self.perform_hardware_checking_in_node_failure(faulty_server_ids)
+            self.perform_server_hardware_checking(faulty_server_ids)
             # 6,执行拨号
             self.perform_dialing_in_node_failure(faulty_server_ids, node['id'])
             # 7,执行压测
@@ -533,7 +535,7 @@ class Baishan(Platform):
             # File "/Users/a.huang/DEV/failure_monitor/checker/webpage_checker/sites/baishan.py", line 362, in <lambda>
             #     is_checked_servers = list(filter(lambda x: x['check_status'] == 1, data))
             # KeyError: 'check_status'
-            if self.check_recovery_conditions_in_node_failure(server_status):
+            if self.evaluate_recovery_conditions_in_node_failure(server_status):
                 # 9,提交恢复申请
                 self.submit_node_recovery_application(node['id'], faulty_server_ids)
                 logger.info(f"白山<{self.login_supplier}>:节点{node['id']}提交恢复申请成功")
@@ -656,7 +658,7 @@ class Baishan(Platform):
                 logger.error(f"白山压测状态码为:{stress_test_info}")
         logger.error(f"白山<{self.login_supplier}>:机柜{ip_type}压测失败")
 
-    def auto_recover_accounts_in_account_failure(self):
+    def auto_recover_accounts(self):
         """自动恢复故障"""
         fault_account_for_processing = self._query_and_category_fault_accounts()
         accounts_id_for_dialing = fault_account_for_processing['accounts_id_for_dialing']
@@ -686,6 +688,142 @@ class Baishan(Platform):
 
         return self.query_faulty_accounts()['account_fault_list']
 
+    def query_account_status_in_server_failure(self, fault_id: int, server_id: int) -> list:
+        query_data = {
+            "query": "\n    query(\n        $id: Int,\n        $svr_id: Int,\n        $pressure_test_status: [Int],"
+                     "\n        $dial_status: [Int],\n        $pagination: commonPageType,\n        $account_id: "
+                     "Int\n    ) {\n        faultSvrAccountList(\n            id: $id,\n            pagination: "
+                     "$pagination,\n            svr_id: $svr_id,\n            pressure_test_status: "
+                     "$pressure_test_status,\n            dial_status: $dial_status,\n            account_id: "
+                     "$account_id\n        ) {\n            id\n            account_id\n            dial_status\n     "
+                     "       p_type\n            fault_start_time\n            fault_end_time\n            "
+                     "retransmission\n            username\n            ipv4_type\n            ipv6_type\n            "
+                     "ipv6\n            net_type\n            ipv6_pressure_test_status\n            "
+                     "ipv6_retransmission\n            ipv6_tcp_in_bw\n            ipv6_pressure_test_log\n           "
+                     " pwd\n            remark\n            vlan_id\n            pressure_test_status\n            "
+                     "tcp_in_bw\n            mac\n            dial_log\n            pressure_test_log\n            "
+                     "acname\n            scname\n            ip\n            plan_bw\n            gateway\n          "
+                     "  netmask\n            consume_time\n            \n        }\n    }\n    \n",
+            "variables": {
+                "pagination": {
+                    "current_page": 1,
+                    "page_size": 10
+                },
+                "id": fault_id,
+                "svr_id": server_id,
+                "dial_status": None,
+                "pressure_test_status": None,
+                "account_id": None
+            }
+        }
+        resp = self._fetch(url=self.query_url, json=query_data)
+        if resp.json()['code'] == 0:
+            return resp.json()['data']['faultSvrAccountList']
+        else:
+            raise Exception(resp.json()['msg'])
+
+    @staticmethod
+    def extract_ids(data_list: list) -> tuple:
+        # 使用列表推导式分别提取account_id和id
+        account_ids = [item['account_id'] for item in data_list]
+        ids = [item['id'] for item in data_list]
+        return ids, account_ids
+
+    def perform_dialing_in_server_failure(self, account_ids: list, ids: list) -> dict:
+        query_data = {
+            "query": "mutation _ (\n        $fault_order_account_ids: [Int],\n        $account_ids: [Int]\n    ) {\n  "
+                     "      faultSvrStep(\n            fault_order_account_ids: $fault_order_account_ids,\n           "
+                     " account_ids: $account_ids\n        )\n    }\n",
+            "variables": {
+                "account_ids": account_ids,
+                "fault_order_account_ids": ids
+            }
+        }
+        """执行拨号"""
+
+        resp = self._fetch(url=self.query_url, json=query_data)
+        if resp.json()['code'] == 0:
+            return resp.json()
+        else:
+            raise Exception(resp.json()['msg'])
+
+    def perform_stress_test_in_server_failure(self, fault_id: int, fault_account_ids: list) -> dict:
+        """执行压测"""
+        query_data = {
+            "query": "mutation _ ($pressure_test_params: [svrPressureTestType!],$pressure_type:Int) {\n        "
+                     "svrPressureTest(pressure_test_params: $pressure_test_params,pressure_type:$pressure_type) {\n   "
+                     "         result\n        }\n    }\n",
+            "variables": {
+                "pressure_test_params": [
+                    {
+                        "fault_id": fault_id,
+                        "fault_account_ids": fault_account_ids
+                    }
+                ],
+                "pressure_type": 0
+            }
+        }
+        resp = self._fetch(url=self.query_url, json=query_data)
+        if resp.json()['code'] == 0:
+            return resp.json()
+        else:
+            raise Exception(resp.json()['msg'])
+
+    @staticmethod
+    def filter_servers_that_can_be_recovered(servers_info: list) -> list:
+        result = []
+        for item in servers_info:
+            # Check if all 'check_status' in 'check' are 3
+            status_all_three = all(check['check_status'] == 3 for check in item['check'])
+            result.append(item["id"])
+        return result
+
+    def commit_recovery_application_in_server_failure(self, fault_id: int) -> dict:
+        """提交恢复申请"""
+        query_data = {
+            "query": "mutation _ (\n        $fault_id: Int!\n        $is_can_recover: Int!\n        $is_reinstall: Int\n        $is_power_off: Int\n        $is_baishan_server: Int\n        $is_replace_hard_disk: Int\n        $accountability: Int\n        $is_replace_new_svr: Int\n        $comment: String\n        $supplier_name: String\n    ) {\n        svrRecoverApply(\n            fault_id: $fault_id\n            is_can_recover: $is_can_recover\n            is_reinstall: $is_reinstall\n            is_power_off: $is_power_off\n            is_baishan_server: $is_baishan_server\n            is_replace_hard_disk: $is_replace_hard_disk\n            accountability: $accountability\n            is_replace_new_svr:$is_replace_new_svr\n            comment: $comment\n            supplier_name: $supplier_name\n        ) {\n            result\n        }\n    }\n",
+            "variables": {
+                "fault_id": fault_id,
+                "is_can_recover": 1,
+                "is_baishan_server": 1,
+                "accountability": 0,
+                "is_reinstall": 0,
+                "is_power_off": 0,
+                "is_replace_hard_disk": 0,
+                "comment": "电源故障",
+                "supplier_name": "视觉蓝-技术群-ruby"
+            }
+        }
+        resp = self._fetch(url=self.query_url, json=query_data)
+        if resp.json()['code'] == 0:
+            return resp.json()
+        else:
+            raise Exception(resp.json()['msg'])
+
+    def auto_recover_servers(self):
+        """自动恢复故障"""
+        faulty_servers = self.query_faulty_servers()
+        server_info_list = []
+        for server in faulty_servers:
+            fault_id = server['id']
+            server_id = server['svr_id']
+            server_info_list.append((fault_id, server_id))
+            self.perform_server_connectivity_checking(fault_id)
+            self.perform_server_hardware_checking(fault_id)
+            ret = self.query_account_status_in_server_failure(fault_id, server_id)
+            ids, account_ids = self.extract_ids(ret)
+            self.perform_dialing_in_server_failure(account_ids, ids)
+        time.sleep(5 * 60)
+        for fault_id, server_id in server_info_list:
+            accounts = self.query_account_status_in_server_failure(fault_id, server_id)
+            dialed_accounts = self._filter_account_for_stress_test(accounts)
+            self.perform_stress_test_in_server_failure(fault_id, dialed_accounts)
+        time.sleep(10 * 60)
+        final_servers_status = self.query_faulty_servers()
+        recover_server_ids = self.filter_servers_that_can_be_recovered(final_servers_status)
+        for id in recover_server_ids:
+            self.commit_recovery_application_in_server_failure(id)
+
 
 if __name__ == "__main__":
     import os
@@ -702,5 +840,23 @@ if __name__ == "__main__":
     # baishan.auto_recover_accounts_in_account_failure()
     # baishan.rack_auto_perform_stress_test(2765, ip_type="ipv4")
     with Baishan("yicheng") as baishan:
-        servers = baishan.query_faulty_servers()
-        pprint(servers)
+        pass
+# servers = baishan.query_faulty_servers()
+# server_info_list = []
+# for server in servers:
+#     fault_id = server['id']
+#     server_id = server['svr_id']
+#     server_info_list.append((fault_id, server_id))
+#     baishan.perform_server_connectivity_checking(fault_id)
+#     baishan.perform_server_hardware_checking(fault_id)
+#     ret = baishan.query_account_status_in_server_failure(fault_id, server_id)
+#     accounts = baishan.extract_ids(ret)
+#     pprint(accounts)
+#     ret = baishan.perform_dialing_in_server_failure(*accounts)
+#     pprint(ret)
+# time.sleep(5 * 60)
+# for fault_id, server_id in server_info_list:
+#     accounts = baishan.query_account_status_in_server_failure(fault_id, server_id)
+#     dialed_accounts = baishan._filter_account_for_stress_test(accounts)
+#     baishan.perform_stress_test_in_server_failure(fault_id, dialed_accounts)
+# time.sleep(10 * 60)

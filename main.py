@@ -17,25 +17,31 @@ def test_baishan_account():
     client = Baishan("vision_blue")
     # client = Baishan("yicheng")
     client.init()
-    client.auto_recover_accounts_in_account_failure()
+    client.auto_recover_accounts()
 
 
 def test_node_recover():
     # client = Baishan("vision_blue")
     client = Baishan("yicheng")
     client.init()
-    client.auto_recover_node_in_node_failure()
+    client.auto_recover_nodes()
 
 
 def test_rack_mounting():
     # baishan = Baishan("vision_blue")
     baishan = Baishan("yicheng")
-    baishan.auto_recover_accounts_in_account_failure()
+    baishan.auto_recover_accounts()
     baishan.perform_server_stress_test_in_server_rack_mounting(2763, "ipv4")
     baishan.perform_stress_test_in_server_rack_mounting(2763, "ipv6")
     msg = WeChatTemplateMessage()
     msg.send_network_recovery_notification("ozoJjv3QyBLlDf-PzkxfrRA5aPHk", "http://www.baidu.com", "压测成功了",
                                            "ipv4", "ipv6", "remark")
+
+
+def test_server_recovery():
+    with Baishan("yicheng") as baishan:
+        baishan.auto_recover_servers()
+
 
 
 # def test_haidian():
@@ -68,7 +74,7 @@ def test_bug():
         faulty_server_ids = list(map(lambda x: x.get("id"), faulty_servers))
         # server_status = client.query_faulty_servers_in_node_failure(node['id'])
 
-        if client.check_recovery_conditions_in_node_failure(faulty_servers):
+        if client.evaluate_recovery_conditions_in_node_failure(faulty_servers):
             client.submit_node_recovery_application(node['id'], faulty_server_ids)
 
 
@@ -95,5 +101,5 @@ if __name__ == "__main__":
     # test_device_online_monitor()
     # test_bug()
 
-    server_income_monitor()
-
+    # server_income_monitor()
+    test_server_recovery()

@@ -32,6 +32,16 @@ beat_schedule = {
         "schedule": 60 * 60,
         "args": ()
     },
+    "baishan_yicheng_auto_recover_servers_every_hour": {
+        "task": "tasks.monitor_tasks.yicheng_auto_recover_servers",
+        "schedule": 60 * 60,
+        "args": ()
+    },
+    "baishan_vision_blue_auto_recover_servers_every_hour": {
+        "task": "tasks.monitor_tasks.vision_blue_auto_recover_servers",
+        "schedule": 60 * 60,
+        "args": ()
+    },
     "server_income_monitor_every_day": {
         "task": "tasks.monitor_tasks.server_income_monitor",
         "schedule": crontab(minute="0", hour='10'),  # 每天10点
