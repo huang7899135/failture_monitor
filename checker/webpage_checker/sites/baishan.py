@@ -804,23 +804,23 @@ class Baishan(Platform):
     def auto_recover_servers(self):
         """自动恢复故障"""
         logger.info("自动恢复服务器开始")
-        # faulty_servers = self.query_faulty_servers()
-        # server_info_list = []
-        # for server in faulty_servers:
-        #     fault_id = server['id']
-        #     server_id = server['svr_id']
-        #     server_info_list.append((fault_id, server_id))
-        #     self.perform_server_connectivity_checking(fault_id)
-        #     self.perform_server_hardware_checking(fault_id)
-        #     ret = self.query_account_status_in_server_failure(fault_id, server_id)
-        #     ids, account_ids = self.extract_ids(ret)
-        #     self.perform_dialing_in_server_failure(account_ids, ids)
-        # time.sleep(5 * 60)
-        # for fault_id, server_id in server_info_list:
-        #     accounts = self.query_account_status_in_server_failure(fault_id, server_id)
-        #     dialed_accounts = self._filter_account_for_stress_test(accounts)
-        #     self.perform_stress_test_in_server_failure(fault_id, dialed_accounts)
-        # time.sleep(10 * 60)
+        faulty_servers = self.query_faulty_servers()
+        server_info_list = []
+        for server in faulty_servers:
+            fault_id = server['id']
+            server_id = server['svr_id']
+            server_info_list.append((fault_id, server_id))
+            self.perform_server_connectivity_checking(fault_id)
+            self.perform_server_hardware_checking(fault_id)
+            ret = self.query_account_status_in_server_failure(fault_id, server_id)
+            ids, account_ids = self.extract_ids(ret)
+            self.perform_dialing_in_server_failure(account_ids, ids)
+        time.sleep(5 * 60)
+        for fault_id, server_id in server_info_list:
+            accounts = self.query_account_status_in_server_failure(fault_id, server_id)
+            dialed_accounts = self._filter_account_for_stress_test(accounts)
+            self.perform_stress_test_in_server_failure(fault_id, dialed_accounts)
+        time.sleep(10 * 60)
         final_servers_status = self.query_faulty_servers()
         recover_server_ids = self.filter_servers_that_can_be_recovered(final_servers_status)
         print(recover_server_ids)
