@@ -660,11 +660,16 @@ class Baishan(Platform):
         logger.error(f"白山<{self.login_supplier}>:机柜{ip_type}压测失败")
 
     def auto_recover_accounts(self):
-        """自动恢复故障"""
-        fault_account_for_processing = self._query_and_category_fault_accounts()
-        accounts_id_for_dialing = fault_account_for_processing['accounts_id_for_dialing']
+        """
+        自动恢复账号
+        :return:
+        """
+        # fault_account_for_processing = self._query_and_category_fault_accounts()
+        fault_account_for_processing = []
+        account_ids = [item['id'] for item in self.query_faulty_accounts()]
+        # accounts_id_for_dialing = fault_account_for_processing['accounts_id_for_dialing']
         # 执行拨号
-        self.perform_accounts_dialing_in_account_failure(accounts_id_for_dialing)
+        self.perform_accounts_dialing_in_account_failure(account_ids)
         # 等待10分钟,查看是否还有拨号中的号码,没有后,就进入压测环节
         for _ in range(20):
             time.sleep(30)
