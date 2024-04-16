@@ -43,13 +43,6 @@ def test_server_recovery():
         baishan.auto_recover_servers()
 
 
-
-# def test_haidian():
-#     with HaiDian() as haidian:
-#         ret = haidian.perform_income_check()
-#         pprint(ret)
-
-
 def test_openfog():
     openfog = Openfog()
     openfog.init()
@@ -101,5 +94,5 @@ if __name__ == "__main__":
     # test_device_online_monitor()
     # test_bug()
 
-    # server_income_monitor()
-    test_server_recovery()
+    server_income_monitor()
+    # test_server_recovery()
