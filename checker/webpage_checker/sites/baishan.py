@@ -666,7 +666,7 @@ class Baishan(Platform):
         """
         # fault_account_for_processing = self._query_and_category_fault_accounts()
         fault_account_for_processing = []
-        account_ids = [item['id'] for item in self.query_faulty_accounts()]
+        account_ids = [item['id'] for item in self.query_faulty_accounts()["account_fault_list"]]
         # accounts_id_for_dialing = fault_account_for_processing['accounts_id_for_dialing']
         # 执行拨号
         self.perform_accounts_dialing_in_account_failure(account_ids)

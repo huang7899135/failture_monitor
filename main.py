@@ -84,7 +84,7 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    # test_baishan_account()
+    test_baishan_account()
 
     # server_income_monitor()
     # test_openfog()
@@ -94,5 +94,5 @@ if __name__ == "__main__":
     # test_device_online_monitor()
     # test_bug()
 
-    server_income_monitor()
+    # server_income_monitor()
     # test_server_recovery()
