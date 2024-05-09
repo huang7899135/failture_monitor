@@ -15,7 +15,7 @@ app = Flask(__name__, template_folder='web/templates', static_folder='web/static
 
 
 @app.route('/device_failure', methods=['GET'])
-def device_failure():
+def get_device_failure():
     """用户故障通知视图"""
     sql_session = SessionLocal()
     user_id = request.args.get('user_id')
@@ -68,7 +68,7 @@ def device_failure():
 
 
 @app.route('/device_failure', methods=['POST'])
-def device_failure():
+def post_device_failure():
     """
     将故设备故障单的is_accepted字段置为True,并将处理人设置为当前用户
     :return:
