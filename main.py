@@ -3,6 +3,7 @@ from monitor.server_income_monitor import ServerIncomeMonitor
 from checker.webpage_checker.sites.baishan import Baishan
 from checker.webpage_checker.sites.openfog import Openfog
 from checker.webpage_checker.sites.haidian import HaiDian
+from checker.webpage_checker.sites.xunlei import XunLei
 from notifier.wechat_template_message import WeChatTemplateMessage
 from utils.logger import setup_logger
 import os
@@ -76,6 +77,11 @@ def server_income_monitor():
         monitor.run()
 
 
+def test_xunlei():
+    xunlei = XunLei()
+    xunlei.query_online_device_fault_account()
+
+
 if __name__ == "__main__":
     import os
     import time
@@ -83,8 +89,8 @@ if __name__ == "__main__":
 
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
-
-    test_baishan_account()
+    test_xunlei()
+    # test_baishan_account()
 
     # server_income_monitor()
     # test_openfog()

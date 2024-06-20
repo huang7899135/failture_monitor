@@ -183,7 +183,7 @@ class Baishan(Platform):
         return result
 
     @staticmethod
-    def _filter_account_for_stress_test(data: list) -> list:
+    def _filter_account_of_successfully_dialed(data: list) -> list:
         """
         遍历data中的账号,如果dial_status为2,就将符合条件的账号组成一个账号列表返回
         :param data: 节点下的故障账号
@@ -412,16 +412,23 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def perform_stress_test_in_node_failure(self, node_feedback_id: int) -> dict:
+    def perform_stress_test_in_node_failure(self, node_feedback_id: int, ip_type: str = "ipv4") -> dict:
         """
         查询节点下面可以进行压测的账号,然后执行压测
-        :param node_feedback_id:
+        :param node_feedback_id: 故障id
+        :param ip_type:ipv4 or ipv6
         :return: 返回的压测提交是否成功结果
         """
-        # 1,先查询节点下的故障账号的状态
+        if ip_type == 'ipv4':
+            pressure_type = 0
+        elif ip_type == 'ipv6':
+            pressure_type = 1
+        else:
+            raise ValueError("Invalid test type provided. Use 'ipv4' or 'ipv6'")
+            # 1,先查询节点下的故障账号的状态
         account_status = self.query_account_status_in_node_failure(node_feedback_id)
         # 2,整理可以压测的账号
-        accounts_id_for_stress_test = self._filter_account_for_stress_test(account_status)
+        accounts_id_for_stress_test = self._filter_account_of_successfully_dialed(account_status)
 
         query_data = {
             "query": "mutation _ (\n        $fault_receipt_id: Int,\n        $fault_svr_order_ids: [Int],\n        "
@@ -433,7 +440,7 @@ class Baishan(Platform):
                 "fault_receipt_id": node_feedback_id,
                 "is_all": False,
                 "fault_account_ids": accounts_id_for_stress_test,
-                "pressure_type": 0
+                "pressure_type": pressure_type
             }
         }
         resp = self._fetch(url=self.query_url, json=query_data)
@@ -530,6 +537,8 @@ class Baishan(Platform):
             time.sleep(60 * 5)
             self.perform_stress_test_in_node_failure(node['id'])
             time.sleep(60 * 10)
+            self.perform_stress_test_in_node_failure(node['id'], "ipv6")
+            time.sleep(60 * 10)
             # 8,查询是否满足恢复条件
             server_status = self.query_faulty_servers_in_node_failure(node['id'])
             # FIXME: 下面有异常,需要处理
@@ -557,7 +566,6 @@ class Baishan(Platform):
                 ],
                 "servers": []
             }
-
         }
         resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
@@ -823,7 +831,7 @@ class Baishan(Platform):
         time.sleep(5 * 60)
         for fault_id, server_id in server_info_list:
             accounts = self.query_account_status_in_server_failure(fault_id, server_id)
-            dialed_accounts = self._filter_account_for_stress_test(accounts)
+            dialed_accounts = self._filter_account_of_successfully_dialed(accounts)
             self.perform_stress_test_in_server_failure(fault_id, dialed_accounts)
         time.sleep(10 * 60)
         final_servers_status = self.query_faulty_servers()

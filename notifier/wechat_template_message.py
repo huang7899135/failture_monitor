@@ -61,11 +61,11 @@ class WeChatTemplateMessage(Notifier):
         current_time = int(time.time())
         if cls.token is None or current_time >= cls.token_expiry_time:
             logger.debug("token过期,从新获取token")
-            cls.get_token_from_server()
+            cls.get_new_token()
         return cls.token
 
     @classmethod
-    def get_token_from_server(cls):
+    def get_new_token(cls):
         """从新请求token"""
         current_time = int(time.time())
         url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + cls.app_id + "&secret=" + cls.app_secret
@@ -114,7 +114,7 @@ class WeChatTemplateMessage(Notifier):
                 continue
             else:
                 logger.warning(f"errcode: {res['errcode']},message:{res['errmsg']},从新获取token")
-                self.get_token_from_server()
+                self.get_new_token()
                 url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + self.get_token()
                 continue
         logger.critical("超过做大重试次数,模板消息发送失败")

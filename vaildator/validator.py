@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from config.setting import NOTICE_START_TIME, NOTICE_END_TIME
 from abc import ABC, abstractmethod
-from model.session import SessionLocal
+from model.session import SessionLocal, get_session
 from model.models import UserNotifyFrequency, FailureTicket
 from celery.utils.log import get_task_logger
 from config.setting import DEVICE_ONLINE_MONITOR_INTERVAL
@@ -35,8 +35,16 @@ class TimeValidation(BaseValidation):
 
     def validate(self, message):
         current_time = datetime.now().time()
+        fault_time = message.get("fault_time")
+        # 保证不在通知时间内能至少发送一次通知
+        if fault_time and (NOTICE_START_TIME < fault_time < NOTICE_END_TIME):
+            fault_time_plus_10 = (datetime.combine(datetime.today(), fault_time) + timedelta(minutes=10)).time()
+            if current_time < fault_time_plus_10:
+                return message
+
         if current_time < NOTICE_START_TIME or current_time > NOTICE_END_TIME:
             raise TimeValidateError("不在通知时间段内")
+
         return message
 
 
