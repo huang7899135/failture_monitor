@@ -35,7 +35,10 @@ class TimeValidation(BaseValidation):
 
     def validate(self, message):
         current_time = datetime.now().time()
-        fault_time = message.get("fault_time")
+        fault_time_str = message.get("fault_time")
+        datetime_object = datetime.strptime(fault_time_str, '%Y-%m-%d %H:%M:%S')
+        # 从 datetime 对象获取 time 对象
+        fault_time = datetime_object.time()
         # 保证不在通知时间内能至少发送一次通知
         if fault_time and (NOTICE_START_TIME < fault_time < NOTICE_END_TIME):
             fault_time_plus_10 = (datetime.combine(datetime.today(), fault_time) + timedelta(minutes=10)).time()

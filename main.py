@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
-    test_xunlei()
+    # test_xunlei()
     # test_baishan_account()
 
     # server_income_monitor()
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    # test_device_online_monitor()
+    test_device_online_monitor()
     # test_bug()
 
     # server_income_monitor()
