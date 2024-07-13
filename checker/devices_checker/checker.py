@@ -24,7 +24,7 @@ class AsyncDeviceOnlineChecker:
 
     async def __check_via_icmp(self):
         try:
-            await aioping.ping(self.address, timeout=3)
+            await aioping.ping(self.address, timeout=5)
             return True
         except TimeoutError:
             return False
