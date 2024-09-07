@@ -1,6 +1,7 @@
 import time
 from .BasePlatform import Platform
 from celery.utils.log import get_task_logger
+from utils.crypto import encrypt_data_with_public_key
 import os
 
 logger = get_task_logger(__name__)
@@ -24,13 +25,17 @@ class Baishan(Platform):
         """因为白山有2个公司主体,所以需要登录2次,分别获取2个公司的token"""
         self.before_login()
         login_url = "https://service-luohan-auth.bs58i.baishancdnx.com/login"
+
         login_data = {
             "client_id": "luohan",
             "phone": self.username,
             "password": self.password,
             "supplier_id": supplier_id
         }
-        login_resp = self.session.post(url=login_url, json=login_data, verify=False)
+        data = {
+            "secret": encrypt_data_with_public_key(self._get_pub_key(), login_data)
+        }
+        login_resp = self.session.post(url=login_url, json=data, verify=False)
         # logger.debug(login_resp.json())
         if login_resp.json()['code'] == 200:
             # 保存token
@@ -69,6 +74,14 @@ class Baishan(Platform):
             "query": "{logout {result}}\n"
         }
         self._fetch(self.query_url, json=data)
+
+    def _get_pub_key(self) -> str:
+        url = f"https://service-luohan-auth.bs58i.baishancdnx.com/publicKey"
+        resp = self.session.get(url)
+        if resp.json()['code'] == 200:
+            pub_key_str = resp.json()['data']
+            logger.debug(f"白山<{self.login_supplier}>:获取公钥成功,")
+            return pub_key_str
 
     def session_is_unexpected(self, resp):
         super().session_is_unexpected(resp)

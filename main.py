@@ -16,9 +16,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def test_baishan_account():
     client = Baishan("vision_blue")
-    # client = Baishan("yicheng")
     client.init()
-    client.auto_recover_accounts()
+
+    client.pre_login()
+    # client = Baishan("yicheng")
+    # client.init()
+    # client.auto_recover_accounts()
 
 
 def test_node_recover():
@@ -97,8 +100,9 @@ if __name__ == "__main__":
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    test_device_online_monitor()
+    # test_device_online_monitor()
     # test_bug()
 
     # server_income_monitor()
-    # test_server_recovery()
+    test_server_recovery()
+    # test_baishan_account()
