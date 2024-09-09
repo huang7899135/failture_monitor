@@ -70,7 +70,7 @@ class UserNotifyFrequencyValidation(BaseValidation):
                                  .filter(UserNotifyFrequency.user_id == user_id,
                                          UserNotifyFrequency.failure_ticket_id == failure_ticket_id)
                                  .first())
-        if user_notify_frequency.next_notify_time:
+        if user_notify_frequency and user_notify_frequency.next_notify_time:
             next_notify_time = user_notify_frequency.next_notify_time
             current_time = datetime.now()
             logger.warning(f"sqlalchemy query next_notify_time:{next_notify_time},current_time:{current_time}")

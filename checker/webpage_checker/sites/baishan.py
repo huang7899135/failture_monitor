@@ -286,7 +286,8 @@ class Baishan(Platform):
         resp = self._fetch(url=self.query_url, json=query_data)
         # logger.debug(resp.json())
         if resp.json()['code'] == 0:
-            return resp.json()['data']['faultSvrList']
+            fault_servers = resp.json()['data']['faultSvrList']
+            return self.filter_servers_that_can_be_handle(fault_servers)
         else:
             raise Exception(resp.json()['msg'])
 
@@ -330,6 +331,7 @@ class Baishan(Platform):
             raise Exception(resp.json()['msg'])
 
     def query_faulty_servers_in_node_failure(self, node_feedback_id: int) -> list:
+        # TODO: 如果有状态为...之中的,需要提出,说明当时的情况是在手工修复
         """查询故障节点下的故障服务器"""
         query_data = {
             "query": "\n    query (\n        $fault_receipt_id: Int\n        $check_status: [Int]\n        $status: ["
@@ -442,7 +444,6 @@ class Baishan(Platform):
         account_status = self.query_account_status_in_node_failure(node_feedback_id)
         # 2,整理可以压测的账号
         accounts_id_for_stress_test = self._filter_account_of_successfully_dialed(account_status)
-
         query_data = {
             "query": "mutation _ (\n        $fault_receipt_id: Int,\n        $fault_svr_order_ids: [Int],\n        "
                      "$fault_account_ids: [Int],\n        $is_all: Boolean,\n        $pressure_type: Int\n    ) {\n   "
@@ -802,6 +803,15 @@ class Baishan(Platform):
         for item in servers_info:
             # Check if all 'check_status' in 'check' are 3
             status_all_three = all(check['check_status'] == 3 for check in item['check'])
+            result.append(item['id']) if status_all_three else None
+        return result
+
+    @staticmethod
+    def filter_servers_that_can_be_handle(servers_info: list) -> list:
+        result = []
+        for item in servers_info:
+            # Check if all 'check_status' in 'check' are 3
+            status_all_three = all(check['check_status'] == 1 for check in item['check'])
             result.append(item['id']) if status_all_three else None
         return result
 

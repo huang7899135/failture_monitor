@@ -100,9 +100,9 @@ if __name__ == "__main__":
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    # test_device_online_monitor()
+    test_device_online_monitor()
     # test_bug()
 
     # server_income_monitor()
-    test_server_recovery()
+    # test_server_recovery()
     # test_baishan_account()
