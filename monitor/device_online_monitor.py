@@ -156,7 +156,9 @@ class DevicesOnlineMonitor(BaseMonitor):
     def generate_fault_ticket(self, msg: dict):
         """生成维护工单,返回工单id"""
         device_id = msg.get("id")
-        fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
+        # fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
+        #                              is_done=False)
+        fault_ticket = FailureTicket(device_id=device_id, is_accepted=False,
                                      is_done=False)
         self.sql_session.add(fault_ticket)
         self.sql_session.commit()
