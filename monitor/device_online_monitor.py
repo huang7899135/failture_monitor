@@ -156,9 +156,7 @@ class DevicesOnlineMonitor(BaseMonitor):
     def generate_fault_ticket(self, msg: dict):
         """生成维护工单,返回工单id"""
         device_id = msg.get("id")
-        # fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
-        #                              is_done=False)
-        fault_ticket = FailureTicket(device_id=device_id, is_accepted=False,
+        fault_ticket = FailureTicket(device_id=device_id, fault_time=msg['fault_time'], is_accepted=False,
                                      is_done=False)
         self.sql_session.add(fault_ticket)
         self.sql_session.commit()
@@ -206,13 +204,13 @@ class DevicesOnlineMonitor(BaseMonitor):
         if not msg['is_online']:
             # logger.info(f"发现故障:{msg}")
             fault_tickets = self.query_fault_ticket(msg)
-            # print(fault_tickets, "fault_tickets")
             if not fault_tickets:
-                # logger.info(f"没有发现故障工单,新建工单")
                 self.generate_fault_ticket(msg)
-                # logger.info(f"新建工单成功")
             # 从故障单中获取故障时间,并赋值给msg
-            msg["fault_time"] = fault_tickets[0].fault_time
+            try:
+                msg["fault_time"] = fault_tickets[0].fault_time
+            except IndexError:
+                msg["fault_time"] = datetime.now()
 
             self.send_fault_notify(msg)
             # logger.info(f"发送故障通知成功")
