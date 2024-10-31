@@ -45,10 +45,14 @@ class AsyncDeviceOnlineChecker:
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(f"http://{self.address}:{self.port}", timeout=3) as response:
-                    if response.status == 200:
+                    if 200 <= response.status < 600:
                         return True
                     return False
             except (asyncio.exceptions.TimeoutError, ConnectionRefusedError, aiohttp.ClientConnectorError):
+                logger.debug(f"http://{self.address}:{self.port} access error: {e}")
+                return False
+            except Exception as e:
+                logger.debug(f"http://{self.address}:{self.port} access unknown error: {e}")
                 return False
 
     @property
@@ -162,25 +166,8 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     # logger = setup_logger()
     s = time.time()
-    ip_string = '''
-    117.173.190.36
-    117.173.190.37
-    112.44.207.173
-    112.44.207.137
-    117.173.190.134
-    112.44.207.157
-    117.173.190.94
-    117.173.190.46
-    112.44.207.145
-    112.44.207.147
-    112.44.207.144
-    112.44.207.104
-    117.173.190.54
-    112.44.207.194
-
-    '''
-    ip_list = ip_string.strip().split("\n")
-    target = [{"check_method": "icmp", "address": ip} for ip in ip_list]
+    target = [{"check_method": "http", "address": "tunnel.gycloud.net", "port": 12040}]
+    # target = [{"check_method": "http", "address": "www.baidu.com", "port": 80}]
     ret = perform_async_check_devices(target)
     pprint(ret)
     # print(ret)
