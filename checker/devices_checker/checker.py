@@ -48,7 +48,7 @@ class AsyncDeviceOnlineChecker:
                     if 200 <= response.status < 600:
                         return True
                     return False
-            except (asyncio.exceptions.TimeoutError, ConnectionRefusedError, aiohttp.ClientConnectorError):
+            except (asyncio.exceptions.TimeoutError, ConnectionRefusedError, aiohttp.ClientConnectorError) as e:
                 logger.debug(f"http://{self.address}:{self.port} access error: {e}")
                 return False
             except Exception as e:
