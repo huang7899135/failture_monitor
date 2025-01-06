@@ -53,15 +53,29 @@ class Platform(ABC):
 
     def _fetch(self, *args, **kwargs):
         """加载本地session,如果失败就从新登录"""
+        resp = None
         if not self.session:
             logger.info("加载本地session失败,从新登录")
             self._login()
-        resp = self.session.post(*args, **kwargs, verify=False)
-        # logger.debug(f"fetch status_code:{resp.status_code}")
+        for _ in range(3):
+            try:
+                resp = self.session.post(*args, **kwargs, verify=False)
+            except requests.exceptions.ConnectionError:
+                pass
+            else:
+                break
+        if resp is None:
+            raise Exception("请求失败,请检查网络")
         if self.session_is_unexpected(resp):
             logger.info("session异常,重新登录")
             self._login()
-            resp = self.session.post(*args, **kwargs, verify=False)
+            for _ in range(3):
+                try:
+                    resp = self.session.post(*args, **kwargs, verify=False)
+                except requests.exceptions.ConnectionError:
+                    pass
+                else:
+                    break
         return resp
 
     def _retrieve(self, *args, **kwargs):

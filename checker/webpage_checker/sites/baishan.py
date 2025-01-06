@@ -902,6 +902,10 @@ class Baishan(Platform):
             fault_id = server['id']
             server_id = server['svr_id']
             server_name = server['hostname']
+            is_pending = server['status']
+            if is_pending == 1:
+                logger.debug(f"{server_name}正在处理中")
+                continue
             server_info_list.append((fault_id, server_id, server_name))
             logger.debug(f"当前hostname：{server['hostname']}")
             if server['check'][2]['check_status'] in [0, 2]:  # 未检测0或检测不通过2, 执行连通性检测,检测中1 和 检测成功3 跳过
@@ -951,8 +955,10 @@ class Baishan(Platform):
 
         final_servers_status = self.query_faulty_servers()
         recover_server_ids = self.filter_servers_that_can_be_recovered(final_servers_status)
+        logger.debug(f"当前可恢复的服务器数量为{len(recover_server_ids)}")
         # print(recover_server_ids)
         for server_id in recover_server_ids:
+            logger.debug(f"开始提交服务器恢复")
             self.commit_recovery_application_in_server_failure(server_id)
 
 
