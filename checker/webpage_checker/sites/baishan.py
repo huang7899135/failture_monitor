@@ -819,7 +819,7 @@ class Baishan(Platform):
         if resp.json()['code'] == 0:
             return resp.json()
         else:
-            raise Exception(resp.json()['msg'])
+            logger.warning(resp.json()['msg'])
 
     def perform_pressure_test_in_server_failure(self, fault_id: int, fault_account_ids: list, ip_type: str = "ipv4") -> dict:
         """执行压测"""
@@ -835,7 +835,7 @@ class Baishan(Platform):
                         "fault_account_ids": fault_account_ids
                     }
                 ],
-                "pressure_type": 0
+                "pressure_type": pressure_type
             }
         }
         resp = self._fetch(url=self.query_url, json=query_data)
@@ -896,40 +896,57 @@ class Baishan(Platform):
         """自动恢复故障"""
         logger.info("自动恢复服务器开始")
         faulty_servers = self.query_faulty_servers()
+        logger.debug(f"故障服务器数量{len(faulty_servers)}")
         server_info_list = []
         for server in faulty_servers:
             fault_id = server['id']
             server_id = server['svr_id']
-            server_info_list.append((fault_id, server_id))
+            server_name = server['hostname']
+            server_info_list.append((fault_id, server_id, server_name))
+            logger.debug(f"当前hostname：{server['hostname']}")
             if server['check'][2]['check_status'] in [0, 2]:  # 未检测0或检测不通过2, 执行连通性检测,检测中1 和 检测成功3 跳过
                 self.perform_server_connectivity_checking(fault_id)
+                logger.debug(f"{server['hostname']}执行联通性检查")
             if server['check'][0]['check_status'] in [0, 2]:
                 self.perform_server_hardware_checking(fault_id)
+                logger.debug(f"{server['hostname']}执行硬件检查")
+
             if server['check'][1]['check_status'] in [0, 2]:
-                # 执行ipv4 压测
+                # 执行拨号
                 ret = self.query_account_status_in_server_failure(fault_id, server_id)
+                logger.debug(f"{server['hostname']}查询账号状态")
+
                 ids, account_ids = self.extract_ids(ret)
-                self.perform_dialing_in_server_failure(account_ids, ids)
-                time.sleep(5 * 60)
+                if account_ids:
+                    self.perform_dialing_in_server_failure(account_ids, ids)
+                    logger.debug(f"{server['hostname']}执行拨号")
+        logger.debug("等待拨号结果，将耗时5分钟")
+        time.sleep(5 * 60)
 
         # 执行ipv4压测
-        for fault_id, server_id in server_info_list:
+        for fault_id, server_id, server_name in server_info_list:
+            logger.debug(f"{server_name}查询账号状态")
             accounts = self.query_account_status_in_server_failure(fault_id, server_id)
             account_ids_of_dialed = self._filter_account_ids_for_ipv4_pressure_test(accounts)
             if account_ids_of_dialed:
                 self.perform_pressure_test_in_server_failure(fault_id, account_ids_of_dialed)
+                logger.debug(f"{server_name}执行ipv4压测")
+        logger.debug("等待ipv4压测结果，将耗时10分钟")
         time.sleep(10 * 60)
 
         # 判断是否有ipv6，执行ipv6压测
         ipv6_test_flag = False
-        for fault_id, server_id in server_info_list:
+        for fault_id, server_id, server_name in server_info_list:
             # 检查拨号结果
+            logger.debug(f"{server_name}查询账号状态")
             accounts = self.query_account_status_in_server_failure(fault_id, server_id)
             account_ids_with_ipv6 = self._filter_account_ids_for_ipv6_pressure_test(accounts)
             if account_ids_with_ipv6:
                 self.perform_pressure_test_in_server_failure(fault_id, account_ids_with_ipv6, ip_type="ipv6")
+                logger.debug(f"{server_name}执行ipv6压测")
                 ipv6_test_flag = True
         if ipv6_test_flag:
+            logger.debug("等待ipv6压测结果，将耗时10分钟")
             time.sleep(10 * 60)
 
         final_servers_status = self.query_faulty_servers()

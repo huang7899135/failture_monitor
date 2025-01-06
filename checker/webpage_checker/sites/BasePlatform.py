@@ -57,7 +57,7 @@ class Platform(ABC):
             logger.info("加载本地session失败,从新登录")
             self._login()
         resp = self.session.post(*args, **kwargs, verify=False)
-        logger.debug(f"fetch status_code:{resp.status_code}")
+        # logger.debug(f"fetch status_code:{resp.status_code}")
         if self.session_is_unexpected(resp):
             logger.info("session异常,重新登录")
             self._login()

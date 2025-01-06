@@ -45,6 +45,7 @@ def test_rack_mounting():
 
 
 def test_server_recovery():
+    # with Baishan("vision_blue") as baishan:
     with Baishan("yicheng") as baishan:
         baishan.auto_recover_servers()
 
