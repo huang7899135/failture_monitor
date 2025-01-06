@@ -34,9 +34,11 @@ def test_node_recover():
 def test_rack_mounting():
     # baishan = Baishan("vision_blue")
     baishan = Baishan("yicheng")
-    baishan.auto_recover_accounts()
-    baishan.perform_server_stress_test_in_server_rack_mounting(2763, "ipv4")
-    baishan.perform_stress_test_in_server_rack_mounting(2763, "ipv6")
+    # baishan.auto_recover_accounts()
+    baishan.perform_stress_test_in_server_rack_mounting(8071, "ipv4")
+
+    # baishan.perform_server_stress_test_in_server_rack_mounting(8071, "ipv4")
+    # baishan.perform_stress_test_in_server_rack_mounting(2763, "ipv6")
     msg = WeChatTemplateMessage()
     msg.send_network_recovery_notification("ozoJjv3QyBLlDf-PzkxfrRA5aPHk", "http://www.baidu.com", "压测成功了",
                                            "ipv4", "ipv6", "remark")
@@ -92,6 +94,8 @@ if __name__ == "__main__":
 
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
+
+    test_server_recovery()
     # test_xunlei()
     # test_baishan_account()
 
@@ -100,7 +104,7 @@ if __name__ == "__main__":
     # test_node_recover()
     # test_rack_mounting()
     # test_haidian()
-    test_device_online_monitor()
+    # test_device_online_monitor()
     # test_bug()
 
     # server_income_monitor()

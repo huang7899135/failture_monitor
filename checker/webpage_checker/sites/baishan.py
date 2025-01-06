@@ -1,4 +1,7 @@
 import time
+
+import requests.exceptions
+
 from .BasePlatform import Platform
 from celery.utils.log import get_task_logger
 from utils.crypto import encrypt_data_with_public_key
@@ -85,9 +88,14 @@ class Baishan(Platform):
 
     def session_is_unexpected(self, resp):
         super().session_is_unexpected(resp)
-        if resp.json()['code'] == 401:
-            logger.warning(f"白山<{self.login_supplier}>:登录过期,重新登录")
-            return True
+        # print(resp.status_code)
+        # print(resp.text)
+        try:
+            if resp.json()['code'] == 401:
+                logger.warning(f"白山<{self.login_supplier}>:登录过期,重新登录")
+                return True
+        except requests.exceptions.JSONDecodeError:
+            return False
 
     def query_faulty_accounts(self) -> dict:
         """查询故障账号,默认1000条"""
@@ -196,7 +204,7 @@ class Baishan(Platform):
         return result
 
     @staticmethod
-    def _filter_account_of_successfully_dialed(data: list) -> list:
+    def _filter_account_ids_for_ipv4_pressure_test(data: list) -> list:
         """
         遍历data中的账号,如果dial_status为2,就将符合条件的账号组成一个账号列表返回
         :param data: 节点下的故障账号
@@ -205,9 +213,13 @@ class Baishan(Platform):
         # return [item['id'] for item in data if item['dial_status'] == 2]
         rest = []
         for item in data:
-            if item['dial_status'] == 2:
+            if item['dial_status'] == 2 and item['pressure_test_status'] in [0, 3]:
                 rest.append(item['id'])
         return rest
+
+    @staticmethod
+    def _filter_account_ids_for_ipv6_pressure_test(data: list) -> list:
+        return [item['id'] for item in data if item['ipv6'] and item['ipv6_pressure_test_status'] in [0, 3]]
 
     def _query_and_category_fault_accounts(self):
         """查询并分类故障账号"""
@@ -286,8 +298,8 @@ class Baishan(Platform):
         resp = self._fetch(url=self.query_url, json=query_data)
         # logger.debug(resp.json())
         if resp.json()['code'] == 0:
-            fault_servers = resp.json()['data']['faultSvrList']
-            return self.filter_servers_that_can_be_handle(fault_servers)
+            return resp.json()['data']['faultSvrList']
+            # return self.filter_servers_that_can_be_handle(fault_servers)
         else:
             raise Exception(resp.json()['msg'])
 
@@ -443,7 +455,7 @@ class Baishan(Platform):
             # 1,先查询节点下的故障账号的状态
         account_status = self.query_account_status_in_node_failure(node_feedback_id)
         # 2,整理可以压测的账号
-        accounts_id_for_stress_test = self._filter_account_of_successfully_dialed(account_status)
+        accounts_id_for_stress_test = self._filter_account_ids_for_ipv4_pressure_test(account_status)
         query_data = {
             "query": "mutation _ (\n        $fault_receipt_id: Int,\n        $fault_svr_order_ids: [Int],\n        "
                      "$fault_account_ids: [Int],\n        $is_all: Boolean,\n        $pressure_type: Int\n    ) {\n   "
@@ -582,8 +594,16 @@ class Baishan(Platform):
             }
         }
         resp = self._fetch(url=self.query_url, json=query_data)
+        try:
+            logger.info(resp.json())
+        except requests.exceptions.JSONDecodeError:
+            return {}
+
         if resp.json()['code'] == 0:
             logger.info(f"白山<{self.login_supplier}>:机柜{ip_type}压测提交成功")
+            return resp.json()
+        elif resp.json()['code'] == 102001:
+            logger.info(f"白山<{self.login_supplier}>:机柜{ip_type}压测中,请勿重复提交")
             return resp.json()
         else:
             raise Exception(resp.json()['msg'])
@@ -647,16 +667,22 @@ class Baishan(Platform):
             }
         }
         resp = self._fetch(url=self.query_url, json=query_data)
+        logger.info(resp.json())
         if resp.json()['code'] == 0:
+            return resp.json()
+        elif resp.json()['code'] == 102001:
             return resp.json()
         else:
             raise Exception(resp.json()['msg'])
 
     def perform_stress_test_in_server_rack_mounting(self, p_id: int, ip_type: str = "ipv4"):
         """上架流程:自动提交压测"""
-        wait_time = 30
+        wait_time = 60
         for times in range(1000):
             result = self.query_server_stress_result_in_server_rack_mounting(p_id)
+            if result == {}:
+                time.sleep(wait_time)
+                continue
             # 提取所有的ipv6压测信息为一个列表
             if ip_type == "ipv4":
                 stress_test_info = [server['stress_test_status'] for server in
@@ -665,6 +691,7 @@ class Baishan(Platform):
                 stress_test_info = [server['stress_test_v6_status'] for server in
                                     result['data']['bscResourceMachineInfoQuery']]
             # 如果有机柜正在压测中,则等待
+            # if 320018 in stress_test_info:
             if 320018 in stress_test_info:
                 logger.info(f"<{self.suppliers}>机柜{ip_type}压测中")
                 time.sleep(wait_time)
@@ -717,6 +744,25 @@ class Baishan(Platform):
         return self.query_faulty_accounts()['account_fault_list']
 
     def query_account_status_in_server_failure(self, fault_id: int, server_id: int) -> list:
+        """
+        dial_status: 拨号状态
+            0: 没有拨号
+            1: 拨号中
+            2: 拨号成功
+            3: 拨号失败
+        pressure_test_status: ipv4 压测
+            0: 待压测
+            1: 压测中
+            2: 压测成功
+            3: 压测失败
+
+        ipv6_pressure_test_status: ipv6 压测
+            0: 待压测
+            1: 压测中
+            2: 压测成功
+            3: 压测失败
+
+        """
         query_data = {
             "query": "\n    query(\n        $id: Int,\n        $svr_id: Int,\n        $pressure_test_status: [Int],"
                      "\n        $dial_status: [Int],\n        $pagination: commonPageType,\n        $account_id: "
@@ -735,7 +781,7 @@ class Baishan(Platform):
             "variables": {
                 "pagination": {
                     "current_page": 1,
-                    "page_size": 10
+                    "page_size": 50
                 },
                 "id": fault_id,
                 "svr_id": server_id,
@@ -775,8 +821,9 @@ class Baishan(Platform):
         else:
             raise Exception(resp.json()['msg'])
 
-    def perform_stress_test_in_server_failure(self, fault_id: int, fault_account_ids: list) -> dict:
+    def perform_pressure_test_in_server_failure(self, fault_id: int, fault_account_ids: list, ip_type: str = "ipv4") -> dict:
         """执行压测"""
+        pressure_type = 0 if ip_type == "ipv4" else 1
         query_data = {
             "query": "mutation _ ($pressure_test_params: [svrPressureTestType!],$pressure_type:Int) {\n        "
                      "svrPressureTest(pressure_test_params: $pressure_test_params,pressure_type:$pressure_type) {\n   "
@@ -808,11 +855,19 @@ class Baishan(Platform):
 
     @staticmethod
     def filter_servers_that_can_be_handle(servers_info: list) -> list:
+        """
+        check_status:
+            0: 未检测
+            1: 检测中
+            2: 检测不通过
+            3: 检测通过
+        """
         result = []
         for item in servers_info:
-            # Check if all 'check_status' in 'check' are 3
-            status_all_three = all(check['check_status'] == 1 for check in item['check'])
-            result.append(item['id']) if status_all_three else None
+            # 跳过检测中的服务器
+            if any(check['check_status'] == 1 for check in item['check']):
+                pass
+            result.append(item)
         return result
 
     def commit_recovery_application_in_server_failure(self, fault_id: int) -> dict:
@@ -846,22 +901,42 @@ class Baishan(Platform):
             fault_id = server['id']
             server_id = server['svr_id']
             server_info_list.append((fault_id, server_id))
-            self.perform_server_connectivity_checking(fault_id)
-            self.perform_server_hardware_checking(fault_id)
-            ret = self.query_account_status_in_server_failure(fault_id, server_id)
-            ids, account_ids = self.extract_ids(ret)
-            self.perform_dialing_in_server_failure(account_ids, ids)
-        time.sleep(5 * 60)
+            if server['check'][2]['check_status'] in [0, 2]:  # 未检测0或检测不通过2, 执行连通性检测,检测中1 和 检测成功3 跳过
+                self.perform_server_connectivity_checking(fault_id)
+            if server['check'][0]['check_status'] in [0, 2]:
+                self.perform_server_hardware_checking(fault_id)
+            if server['check'][1]['check_status'] in [0, 2]:
+                # 执行ipv4 压测
+                ret = self.query_account_status_in_server_failure(fault_id, server_id)
+                ids, account_ids = self.extract_ids(ret)
+                self.perform_dialing_in_server_failure(account_ids, ids)
+                time.sleep(5 * 60)
+
+        # 执行ipv4压测
         for fault_id, server_id in server_info_list:
             accounts = self.query_account_status_in_server_failure(fault_id, server_id)
-            dialed_accounts = self._filter_account_of_successfully_dialed(accounts)
-            self.perform_stress_test_in_server_failure(fault_id, dialed_accounts)
+            account_ids_of_dialed = self._filter_account_ids_for_ipv4_pressure_test(accounts)
+            if account_ids_of_dialed:
+                self.perform_pressure_test_in_server_failure(fault_id, account_ids_of_dialed)
         time.sleep(10 * 60)
+
+        # 判断是否有ipv6，执行ipv6压测
+        ipv6_test_flag = False
+        for fault_id, server_id in server_info_list:
+            # 检查拨号结果
+            accounts = self.query_account_status_in_server_failure(fault_id, server_id)
+            account_ids_with_ipv6 = self._filter_account_ids_for_ipv6_pressure_test(accounts)
+            if account_ids_with_ipv6:
+                self.perform_pressure_test_in_server_failure(fault_id, account_ids_with_ipv6, ip_type="ipv6")
+                ipv6_test_flag = True
+        if ipv6_test_flag:
+            time.sleep(10 * 60)
+
         final_servers_status = self.query_faulty_servers()
         recover_server_ids = self.filter_servers_that_can_be_recovered(final_servers_status)
-        print(recover_server_ids)
-        for id in recover_server_ids:
-            self.commit_recovery_application_in_server_failure(id)
+        # print(recover_server_ids)
+        for server_id in recover_server_ids:
+            self.commit_recovery_application_in_server_failure(server_id)
 
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@ def get_device_failure():
         if user_notify_frequency_obj:
             user_notify_frequency_obj.message_is_read = True
         else:
-            user_notify_frequency_obj = UserNotifyFrequency(user_id=user_id, failure_ticket_id=failure_ticket_id,
+            user_notify_frequency_obj = UserNotifyFrequency(user_id=int(user_id), failure_ticket_id=int(failure_ticket_id),
                                                             message_is_read=True)
             sql_session.add(user_notify_frequency_obj)
         sql_session.commit()
