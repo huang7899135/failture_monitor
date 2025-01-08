@@ -227,7 +227,7 @@ class Baishan(Platform):
         # 整理故障单的账号,区分各种状态
         return self._identify_account_status(fault_accounts_ticket['account_fault_list'])
 
-    def perform_accounts_stress_test_in_account_failure(self, account_list: list) -> dict:
+    def perform_accounts_stress_test_in_account_failure(self, account_list: list, ip_type: str = "ipv4") -> dict:
         """执行宽带压测"""
         if not account_list:
             logger.info(f"白山<{self.login_supplier}>:没有可以执行压测的账号")
@@ -237,6 +237,7 @@ class Baishan(Platform):
                      "pressure_type:$pressure_type) {\n            result\n        }\n    }\n",
             "variables": {
                 "ids": account_list,
+                "pressure_type": 0 if ip_type == "ipv4" else 1
             }
         }
         logger.info(f"白山<{self.login_supplier}>:执行压测共计账号{len(account_list)}个")
@@ -720,26 +721,26 @@ class Baishan(Platform):
         # 执行拨号
         self.perform_accounts_dialing_in_account_failure(account_ids)
         # 等待10分钟,查看是否还有拨号中的号码,没有后,就进入压测环节
-        for _ in range(20):
-            time.sleep(30)
-            fault_account_for_processing = self._query_and_category_fault_accounts()
-            dialing_accounts = fault_account_for_processing['dialing_accounts']
-            if not dialing_accounts:
-                logger.info(f"白山<{self.login_supplier}>:拨号完成,开始压测")
-                break
-            logger.debug(f"白山<{self.login_supplier}>:等待拨号完成")
+        time.sleep(5* 60)
+
+        fault_account_for_processing = self._query_and_category_fault_accounts()
+        dialing_accounts = fault_account_for_processing['dialing_accounts']
+        if not dialing_accounts:
+            logger.info(f"白山<{self.login_supplier}>:拨号完成,开始ipv4压测")
 
         self.perform_accounts_stress_test_in_account_failure(
             fault_account_for_processing['accounts_id_for_stress_test'])
-        for _ in range(20):
-            time.sleep(30)
-            fault_account_for_processing = self._query_and_category_fault_accounts()
-            stress_test_accounts = fault_account_for_processing['stress_test_accounts']
 
-            if not stress_test_accounts:
-                logger.info(f"白山<{self.login_supplier}>:压测完成")
-                break
-            logger.debug(f"白山<{self.login_supplier}>:等待压测完成")
+        time.sleep(10 * 60)
+
+        self.perform_accounts_stress_test_in_account_failure(
+            fault_account_for_processing['accounts_id_for_stress_test'], ip_type="ipv6")
+        time.sleep(10 * 60)
+
+        # fault_account_for_processing = self._query_and_category_fault_accounts()
+        # stress_test_accounts = fault_account_for_processing['stress_test_accounts']
+
+        logger.info(f"白山<{self.login_supplier}>:压测完成")
 
         return self.query_faulty_accounts()['account_fault_list']
 
@@ -821,7 +822,8 @@ class Baishan(Platform):
         else:
             logger.warning(resp.json()['msg'])
 
-    def perform_pressure_test_in_server_failure(self, fault_id: int, fault_account_ids: list, ip_type: str = "ipv4") -> dict:
+    def perform_pressure_test_in_server_failure(self, fault_id: int, fault_account_ids: list,
+                                                ip_type: str = "ipv4") -> dict:
         """执行压测"""
         pressure_type = 0 if ip_type == "ipv4" else 1
         query_data = {

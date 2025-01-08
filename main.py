@@ -15,13 +15,9 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # logger = setup_logger()
 
 def test_baishan_account():
-    client = Baishan("vision_blue")
-    client.init()
-
-    client.pre_login()
-    # client = Baishan("yicheng")
-    # client.init()
-    # client.auto_recover_accounts()
+    # with Baishan("yicheng") as client:
+    with Baishan("vision_blue") as client:
+        client.auto_recover_accounts()
 
 
 def test_node_recover():
@@ -96,9 +92,9 @@ if __name__ == "__main__":
     os.environ['APP_ENV'] = "dev"
     logger = setup_logger()
 
-    test_server_recovery()
+    # test_server_recovery()
     # test_xunlei()
-    # test_baishan_account()
+    test_baishan_account()
 
     # server_income_monitor()
     # test_openfog()
