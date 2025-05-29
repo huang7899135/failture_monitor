@@ -67,6 +67,7 @@ services:
     volumes:
       - ./datasource:/app/datasource:ro  # 只读挂载配置文件
       - app_logs:/app/log  # 日志持久化
+      - celery_data:/app/celery  # Celery Beat 调度文件
     environment:
       - DATABASE_HOST=db
       - REDIS_HOST=redis
@@ -78,7 +79,7 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
-    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000
+    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=/app/celery/celerybeat-schedule
     restart: unless-stopped
     networks:
       - internal_network
@@ -118,4 +119,6 @@ volumes:
   redis_data:
     driver: local
   app_logs:
+    driver: local
+  celery_data:
     driver: local
