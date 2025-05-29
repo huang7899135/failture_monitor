@@ -9,22 +9,22 @@ echo "==================================================="
 # 检查容器状态
 echo "1. 检查容器状态"
 echo "---------------------------------------------------"
-docker-compose ps
+docker compose ps
 
 echo ""
 echo "2. 检查容器健康状态"
 echo "---------------------------------------------------"
 echo "数据库健康状态:"
-docker-compose ps -q db | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "无法获取数据库健康状态"
+docker compose ps -q db | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "无法获取数据库健康状态"
 
 echo "Redis健康状态:"
-docker-compose ps -q redis | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "无法获取Redis健康状态"
+docker compose ps -q redis | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "无法获取Redis健康状态"
 
 echo ""
 echo "3. 网络连接测试"
 echo "---------------------------------------------------"
 echo "测试应用到数据库的连接:"
-docker-compose exec -T app python -c "
+docker compose exec -T app python -c "
 import os
 import pymysql
 try:
@@ -42,7 +42,7 @@ except Exception as e:
 
 echo ""
 echo "测试应用到Redis的连接:"
-docker-compose exec -T app python -c "
+docker compose exec -T app python -c "
 import os
 import redis
 try:
@@ -56,25 +56,25 @@ except Exception as e:
 echo ""
 echo "4. 检查应用配置"
 echo "---------------------------------------------------"
-docker-compose exec -T app python check_config.py 2>/dev/null || echo "无法运行配置检查"
+docker compose exec -T app python check_config.py 2>/dev/null || echo "无法运行配置检查"
 
 echo ""
 echo "5. 最近的错误日志 (最后20行)"
 echo "---------------------------------------------------"
 echo "应用日志:"
-docker-compose logs --tail=10 app 2>/dev/null || echo "无法获取应用日志"
+docker compose logs --tail=10 app 2>/dev/null || echo "无法获取应用日志"
 
 echo ""
 echo "数据库日志:"
-docker-compose logs --tail=10 db 2>/dev/null || echo "无法获取数据库日志"
+docker compose logs --tail=10 db 2>/dev/null || echo "无法获取数据库日志"
 
 echo ""
 echo "Redis日志:"
-docker-compose logs --tail=10 redis 2>/dev/null || echo "无法获取Redis日志"
+docker compose logs --tail=10 redis 2>/dev/null || echo "无法获取Redis日志"
 
 echo ""
 echo "Celery日志:"
-docker-compose logs --tail=10 celery 2>/dev/null || echo "无法获取Celery日志"
+docker compose logs --tail=10 celery 2>/dev/null || echo "无法获取Celery日志"
 
 echo ""
 echo "==================================================="
