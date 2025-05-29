@@ -82,7 +82,15 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
-    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=celerybeat-schedule
+    command: >
+      sh -c "
+        echo 'Attempting to fix permissions for /app/celery...' && \
+        id appuser || (echo 'User appuser not found, creating...' && addgroup -S appuser && adduser -S -G appuser appuser) && \
+        chown -R appuser:appuser /app/celery && \
+        chmod -R u+rwx /app/celery && \
+        echo 'Permissions fixed. Starting Celery as appuser...' && \
+        exec runuser -u appuser -- celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=celerybeat-schedule
+      "
     restart: unless-stopped
     networks:
       - internal_network

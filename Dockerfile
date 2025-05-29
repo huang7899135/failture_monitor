@@ -41,7 +41,7 @@ ENV FLASK_ENV=production
 ENV APP_ENV=prod
 ENV PYTHONPATH=/app
 
-USER appuser
+# USER appuser
 
 # Run gunicorn when the container launches
 CMD ["gunicorn", "--bind", "0.0.0.0:8090", "--workers", "4", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "50", "web_app:app"]
