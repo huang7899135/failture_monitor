@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM dockerpull.cn/python:3.11-slim
+FROM dockerpull.cn/python:3.11
 
 # Set the working directory in the container
 WORKDIR /app
@@ -36,7 +36,7 @@ ENV PYTHONPATH=/app
 # Create a non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
-RUN chmod 755 /app/celery
+RUN chmod -R 777 /app/celery
 USER appuser
 
 # Run gunicorn when the container launches

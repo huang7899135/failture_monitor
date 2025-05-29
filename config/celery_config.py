@@ -8,6 +8,10 @@ timezone = 'Asia/Shanghai'
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 broker_url = f'redis://{redis_host}:6379/0'
 result_backend = f'redis://{redis_host}:6379/1'
+
+# 解决 Celery 6.0 的连接重试警告
+broker_connection_retry_on_startup = True
+
 beat_schedule = {
     'device_online_monitor': {
         'task': 'tasks.monitor_tasks.device_online_monitor',
