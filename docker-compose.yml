@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "8090:8090"
+      - "8090:8090"  # 只暴露应用端口供外部访问
     volumes:
       - .:/app
     environment:
@@ -17,16 +17,17 @@ services:
       - db
       - redis
     command: flask run --host=0.0.0.0 --port=8090
+    networks:
+      - internal_network
 
   db:
-    image: mysql:8.0
+    image: dockerpull.cn/mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: xs123456
       MYSQL_DATABASE: failure_monitor
       # MYSQL_USER: root # Already default user with MYSQL_ROOT_PASSWORD
       # MYSQL_PASSWORD: xs123456 # Covered by MYSQL_ROOT_PASSWORD
-    ports:
-      - "3306:3306" # Expose MySQL port to host for direct access if needed
+    # 移除端口暴露，只在Docker内部网络中访问
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -34,11 +35,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - internal_network
 
   redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379" # Expose Redis port to host for direct access if needed
+    image: dockerpull.cn/redis:alpine
+    # 移除端口暴露，只在Docker内部网络中访问
     volumes:
       - redis_data:/data
     healthcheck:
@@ -46,6 +48,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - internal_network
 
   celery:
     build: .
@@ -63,6 +67,13 @@ services:
       app: # Celery might need app code to be ready, though not strictly a startup dependency
         condition: service_started
     command: celery -A tasks.monitor_tasks.app worker -l info -B # -B runs beat scheduler in the same process
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    driver: bridge
+    internal: false  # 允许容器访问外部网络（如果需要访问外部API）
 
 volumes:
   mysql_data:

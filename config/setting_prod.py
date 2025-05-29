@@ -1,3 +1,4 @@
+import os
 from datetime import time
 
 # 监控对象数据来源
@@ -14,7 +15,7 @@ DATABASE_CONFIG = {
     'dialect': 'mysql+pymysql',
     'user': 'root',
     'password': 'xs123456',
-    'host': '172.17.0.2',
+    'host': os.getenv('DATABASE_HOST', 'db'),  # 默认使用Docker服务名
     'port': '3306',
     'database': 'failure_monitor'
 }

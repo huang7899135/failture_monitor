@@ -1,6 +1,6 @@
 import os
 
-env = os.getenv('ENV', 'prod')
+env = os.getenv('APP_ENV', 'prod')  # 使用 APP_ENV 环境变量，与 docker-compose.yml 保持一致
 
 if env == 'prod':
     from config.setting_prod import *
