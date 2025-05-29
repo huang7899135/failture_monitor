@@ -1,12 +1,40 @@
+import time
+import sys
 from model.session import engine # Only engine is needed for create_tables
 from model import create_tables
-from sqlalchemy import inspect # To potentially check if any tables exist, if needed for logic
+
+def wait_for_db(max_retries=30, delay=2):
+    """等待数据库连接可用"""
+    for attempt in range(max_retries):
+        try:
+            # 尝试连接数据库
+            connection = engine.connect()
+            connection.close()
+            print(f"✓ 数据库连接成功 (尝试 {attempt + 1}/{max_retries})")
+            return True
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"⏳ 等待数据库连接... (尝试 {attempt + 1}/{max_retries})")
+                time.sleep(delay)
+            else:
+                print(f"❌ 数据库连接失败，已尝试 {max_retries} 次")
+                print(f"错误信息: {e}")
+                return False
+    return False
+
+# 等待数据库连接
+if not wait_for_db():
+    print("❌ 无法连接到数据库，退出初始化")
+    sys.exit(1)
 
 # Create all tables defined in models.py (linked via Base)
 # This function handles checking for existing tables, so no need for manual checks here.
-create_tables()
-
-print("Database tables anre checked / created if they didn't exist.")
+try:
+    create_tables()
+    print("✓ 数据库表结构检查/创建完成")
+except Exception as e:
+    print(f"❌ 数据库表创建失败: {e}")
+    sys.exit(1)
 
 # The following data population part remains commented out for now.
 # If you want to enable it, ensure the YAML file path is correct

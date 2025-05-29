@@ -35,16 +35,20 @@ echo "等待数据库服务初始化..."
 echo "正在检查数据库健康状态..."
 
 # 使用健康检查等待数据库就绪
-max_attempts=30
+max_attempts=60  # 增加到60次，每次等待2秒，总共2分钟
 attempt_num=1
+echo "等待数据库健康检查通过..."
 until [ "$(docker compose ps -q db | xargs docker inspect -f '{{.State.Health.Status}}')" == "healthy" ]; do
     if [ "$attempt_num" -eq "$max_attempts" ]; then
         echo "❌ 数据库健康检查失败，尝试次数已达 $max_attempts 次"
         echo "查看数据库日志："
         docker compose logs db
+        echo "查看数据库容器状态："
+        docker compose ps db
         exit 1
     fi
-    echo "等待数据库健康检查通过 (尝试 $attempt_num/$max_attempts)..."
+    health_status=$(docker compose ps -q db | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+    echo "数据库健康状态: $health_status (尝试 $attempt_num/$max_attempts)..."
     sleep 2
     attempt_num=$((attempt_num+1))
 done
@@ -60,9 +64,12 @@ until [ "$(docker compose ps -q redis | xargs docker inspect -f '{{.State.Health
         echo "❌ Redis 健康检查失败，尝试次数已达 $max_attempts 次"
         echo "查看Redis日志："
         docker compose logs redis
+        echo "查看Redis容器状态："
+        docker compose ps redis
         exit 1
     fi
-    echo "等待 Redis 健康检查通过 (尝试 $attempt_num/$max_attempts)..."
+    health_status=$(docker compose ps -q redis | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+    echo "Redis健康状态: $health_status (尝试 $attempt_num/$max_attempts)..."
     sleep 2
     attempt_num=$((attempt_num+1))
 done
