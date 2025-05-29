@@ -21,8 +21,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container at /app
 COPY . .
 
-# Create log and celery directories
+# Create log and celery directories with proper permissions
 RUN mkdir -p /app/log /app/celery
+
+# Create a non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Set ownership and permissions for directories
+RUN chown -R appuser:appuser /app
+RUN chmod -R 755 /app/log
+RUN chmod -R 777 /app/celery
 
 # Make port 8090 available to the world outside this container
 EXPOSE 8090
@@ -33,10 +41,6 @@ ENV FLASK_ENV=production
 ENV APP_ENV=prod
 ENV PYTHONPATH=/app
 
-# Create a non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-RUN chown -R appuser:appuser /app
-RUN chmod -R 777 /app/celery
 USER appuser
 
 # Run gunicorn when the container launches

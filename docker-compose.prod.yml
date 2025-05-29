@@ -64,6 +64,7 @@ services:
 
   celery:
     build: .
+    working_dir: /app/celery
     volumes:
       - ./datasource:/app/datasource:ro  # 只读挂载配置文件
       - app_logs:/app/log  # 日志持久化
@@ -73,6 +74,7 @@ services:
       - REDIS_HOST=redis
       - APP_ENV=prod
       - CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP=True
+      - PYTHONPATH=/app
     depends_on:
       db:
         condition: service_healthy
@@ -80,7 +82,7 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
-    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=/app/celery/celerybeat-schedule
+    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=celerybeat-schedule
     restart: unless-stopped
     networks:
       - internal_network
