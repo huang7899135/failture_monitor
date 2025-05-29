@@ -5,18 +5,19 @@ services:
       - "8090:8090"  # 只暴露应用端口供外部访问
     volumes:
       - .:/app
+      - app_logs:/app/log  # 生产环境日志持久化
     environment:
       - DATABASE_HOST=db
       - REDIS_HOST=redis
       - FLASK_APP=web_app.py
-      - FLASK_ENV=development # Ensures Flask runs in development mode for debugging
-      - APP_ENV=dev # To match the setting in config/setting.py
+      - FLASK_ENV=production # 生产环境模式
+      - APP_ENV=prod # 生产环境配置
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: flask run --host=0.0.0.0 --port=8090
+    command: gunicorn --bind 0.0.0.0:8090 --workers 4 --timeout 120 --keep-alive 2 --max-requests 1000 --max-requests-jitter 50 web_app:app
     networks:
       - internal_network
 
@@ -58,10 +59,11 @@ services:
     build: .
     volumes:
       - .:/app
+      - app_logs:/app/log  # 生产环境日志持久化
     environment:
       - DATABASE_HOST=db
       - REDIS_HOST=redis
-      - APP_ENV=dev # To match the setting in config/setting.py
+      - APP_ENV=prod # 生产环境配置
     depends_on:
       db:
         condition: service_healthy
@@ -69,7 +71,7 @@ services:
         condition: service_healthy
       app: # Celery might need app code to be ready, though not strictly a startup dependency
         condition: service_started
-    command: celery -A tasks.monitor_tasks.app worker -l info -B # -B runs beat scheduler in the same process
+    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 # 生产环境降低日志级别并限制并发数
     networks:
       - internal_network
 
@@ -81,3 +83,4 @@ networks:
 volumes:
   mysql_data:
   redis_data:
+  app_logs:

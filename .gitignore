@@ -164,3 +164,22 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# 生产环境相关文件
+.env
+*.sql
+backup_*.sql
+
+# SSL证书
+ssl/
+*.pem
+*.key
+*.crt
+
+# 日志文件
+*.log
+log/
+
+# 临时文件
+*.tmp
+*.bak
+

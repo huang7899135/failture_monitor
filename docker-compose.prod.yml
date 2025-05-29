@@ -1,0 +1,124 @@
+# 生产环境 Docker Compose 配置
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./datasource:/app/datasource:ro  # 只读挂载配置文件
+      - app_logs:/app/log  # 日志持久化
+    environment:
+      - DATABASE_HOST=db
+      - REDIS_HOST=redis
+      - FLASK_APP=web_app.py
+      - FLASK_ENV=production
+      - APP_ENV=prod
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: dockerpull.cn/mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-xs123456}
+      MYSQL_DATABASE: failure_monitor
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=256M
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro  # MySQL配置文件
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD:-xs123456}"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - internal_network
+
+  redis:
+    image: dockerpull.cn/redis:alpine
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro  # Redis配置文件
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - internal_network
+
+  celery:
+    build: .
+    volumes:
+      - ./datasource:/app/datasource:ro  # 只读挂载配置文件
+      - app_logs:/app/log  # 日志持久化
+    environment:
+      - DATABASE_HOST=db
+      - REDIS_HOST=redis
+      - APP_ENV=prod
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    command: celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000
+    restart: unless-stopped
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD", "celery", "-A", "tasks.monitor_tasks.app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx 反向代理（可选）
+  nginx:
+    image: dockerpull.cn/nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro  # SSL证书
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - internal_network
+    profiles:
+      - nginx  # 使用 profile 控制是否启动
+
+networks:
+  internal_network:
+    driver: bridge
+    internal: false
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_logs:
+    driver: local

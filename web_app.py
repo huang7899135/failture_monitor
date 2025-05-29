@@ -1,6 +1,6 @@
 from datetime import datetime
 import pytz
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from model.models import FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
@@ -142,6 +142,42 @@ def user_notify_frequency():
             return {"code": 1, "msg": "参数错误"}
     finally:
         sql_session.close()
+
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """健康检查端点"""
+    try:
+        # 检查数据库连接
+        sql_session = SessionLocal()
+        sql_session.execute('SELECT 1')
+        sql_session.close()
+
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'version': '1.0.0'
+        }), 200
+    except Exception as e:
+        logger.error(f"健康检查失败: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
+
+@app.errorhandler(404)
+def not_found(error):
+    """404错误处理"""
+    return jsonify({'error': 'Not found'}), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    """500错误处理"""
+    logger.error(f"内部服务器错误: {error}")
+    return jsonify({'error': 'Internal server error'}), 500
 
 
 if __name__ == '__main__':
