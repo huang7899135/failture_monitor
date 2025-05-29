@@ -12,7 +12,7 @@ echo ""
 
 # 检查Docker服务
 echo "🐳 Docker 服务状态:"
-if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+if docker compose -f docker-compose.prod.yml ps | grep -q "Up"; then
     echo -e "${GREEN}✓ Docker 服务运行正常${NC}"
 else
     echo -e "${RED}✗ Docker 服务异常${NC}"
@@ -31,7 +31,7 @@ fi
 # 检查数据库连接
 echo ""
 echo "🗄️ 数据库状态:"
-if docker-compose -f docker-compose.prod.yml exec -T db mysqladmin ping -h localhost -u root --password=${MYSQL_ROOT_PASSWORD:-xs123456} > /dev/null 2>&1; then
+if docker compose -f docker-compose.prod.yml exec -T db mysqladmin ping -h localhost -u root --password=${MYSQL_ROOT_PASSWORD:-xs123456} > /dev/null 2>&1; then
     echo -e "${GREEN}✓ 数据库连接正常${NC}"
 else
     echo -e "${RED}✗ 数据库连接失败${NC}"
@@ -40,7 +40,7 @@ fi
 # 检查Redis连接
 echo ""
 echo "📦 Redis 状态:"
-if docker-compose -f docker-compose.prod.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
+if docker compose -f docker-compose.prod.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Redis 连接正常${NC}"
 else
     echo -e "${RED}✗ Redis 连接失败${NC}"
@@ -49,7 +49,7 @@ fi
 # 检查Celery状态
 echo ""
 echo "⚙️ Celery 状态:"
-if docker-compose -f docker-compose.prod.yml exec -T celery celery -A tasks.monitor_tasks.app inspect ping > /dev/null 2>&1; then
+if docker compose -f docker-compose.prod.yml exec -T celery celery -A tasks.monitor_tasks.app inspect ping > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Celery 工作正常${NC}"
 else
     echo -e "${RED}✗ Celery 工作异常${NC}"

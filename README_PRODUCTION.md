@@ -92,8 +92,8 @@ nano .env
 ./deploy-prod.sh logs
 
 # 查看特定服务日志
-docker-compose -f docker-compose.prod.yml logs -f app
-docker-compose -f docker-compose.prod.yml logs -f celery
+docker compose -f docker-compose.prod.yml logs -f app
+docker compose -f docker-compose.prod.yml logs -f celery
 ```
 
 ## 数据库管理
@@ -111,10 +111,10 @@ docker-compose -f docker-compose.prod.yml logs -f celery
 ### 手动备份
 ```bash
 # 创建备份
-docker-compose -f docker-compose.prod.yml exec db mysqldump -u root -p failure_monitor > backup_$(date +%Y%m%d_%H%M%S).sql
+docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p failure_monitor > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 恢复备份
-docker-compose -f docker-compose.prod.yml exec -T db mysql -u root -p failure_monitor < backup_file.sql
+docker compose -f docker-compose.prod.yml exec -T db mysql -u root -p failure_monitor < backup_file.sql
 ```
 
 ## 应用更新
@@ -155,7 +155,7 @@ git pull
 docker stats
 
 # 查看系统负载
-docker-compose -f docker-compose.prod.yml top
+docker compose -f docker-compose.prod.yml top
 ```
 
 ## 安全配置

@@ -36,7 +36,7 @@ check_dependencies() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
+    if ! docker compose version &> /dev/null; then
         log_error "Docker Compose 未安装或不在PATH中"
         exit 1
     fi
@@ -64,7 +64,7 @@ check_env_file() {
 # 构建镜像
 build_images() {
     log_info "构建Docker镜像..."
-    docker-compose -f docker-compose.prod.yml build --no-cache
+    docker compose -f docker-compose.prod.yml build --no-cache
     log_success "镜像构建完成"
 }
 
@@ -73,14 +73,14 @@ init_database() {
     log_info "初始化数据库..."
     
     # 启动数据库服务
-    docker-compose -f docker-compose.prod.yml up -d db redis
+    docker compose -f docker-compose.prod.yml up -d db redis
     
     # 等待数据库准备就绪
     log_info "等待数据库启动..."
     sleep 30
     
     # 运行数据库初始化
-    docker-compose -f docker-compose.prod.yml run --rm app python init_db.py --action=sync
+    docker compose -f docker-compose.prod.yml run --rm app python init_db.py --action=sync
     
     log_success "数据库初始化完成"
 }
@@ -91,10 +91,10 @@ start_services() {
     
     case "$1" in
         "with-nginx")
-            docker-compose -f docker-compose.prod.yml --profile nginx up -d
+            docker compose -f docker-compose.prod.yml --profile nginx up -d
             ;;
         *)
-            docker-compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d
             ;;
     esac
     
@@ -105,7 +105,7 @@ start_services() {
 check_services() {
     log_info "检查服务状态..."
     
-    docker-compose -f docker-compose.prod.yml ps
+    docker compose -f docker-compose.prod.yml ps
     
     # 检查应用健康状态
     log_info "等待应用启动..."
@@ -121,20 +121,20 @@ check_services() {
 # 查看日志
 view_logs() {
     log_info "查看服务日志..."
-    docker-compose -f docker-compose.prod.yml logs -f
+    docker compose -f docker-compose.prod.yml logs -f
 }
 
 # 停止服务
 stop_services() {
     log_info "停止所有服务..."
-    docker-compose -f docker-compose.prod.yml down
+    docker compose -f docker-compose.prod.yml down
     log_success "服务已停止"
 }
 
 # 重启服务
 restart_services() {
     log_info "重启服务..."
-    docker-compose -f docker-compose.prod.yml restart
+    docker compose -f docker-compose.prod.yml restart
     log_success "服务重启完成"
 }
 
@@ -145,7 +145,7 @@ backup_database() {
     timestamp=$(date +"%Y%m%d_%H%M%S")
     backup_file="backup_${timestamp}.sql"
     
-    docker-compose -f docker-compose.prod.yml exec db mysqldump -u root -p${MYSQL_ROOT_PASSWORD:-xs123456} failure_monitor > "$backup_file"
+    docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p${MYSQL_ROOT_PASSWORD:-xs123456} failure_monitor > "$backup_file"
     
     log_success "数据库备份完成: $backup_file"
 }
@@ -155,7 +155,7 @@ cleanup() {
     log_info "清理Docker资源..."
     
     # 停止并删除容器
-    docker-compose -f docker-compose.prod.yml down
+    docker compose -f docker-compose.prod.yml down
     
     # 删除未使用的镜像
     docker image prune -f
