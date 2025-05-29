@@ -208,32 +208,41 @@ class DatabaseInitializer:
     
     def sync_data(self):
         """同步所有数据"""
-        try:
-            # 加载配置数据
-            data = self.load_yaml_data()
+        # 将加载配置数据移到会话开始前，以减少数据库会话的持有时间
+        data = self.load_yaml_data()
             
-            with get_session() as session:
+        with get_session() as session:
+            try:
+                logger.info("开始数据库事务...")
                 # 1. 同步用户组
                 groups_data = data.get('groups', [])
                 group_name_to_id = self.sync_groups(groups_data, session)
+                logger.info(f"用户组同步完成。Group map: {group_name_to_id}")
                 
                 # 2. 同步用户
                 users_data = data.get('users', [])
                 user_name_to_id = self.sync_users(users_data, group_name_to_id, session)
+                logger.info(f"用户同步完成。User map: {user_name_to_id}")
                 
                 # 3. 同步用户通知配置
                 notify_configs_data = data.get('user_notify_configurations', [])
                 self.sync_user_notify_configs(notify_configs_data, user_name_to_id, session)
+                logger.info("用户通知配置同步完成。")
                 
                 # 4. 同步设备
                 devices_data = data.get('devices', [])
                 self.sync_devices(devices_data, group_name_to_id, session)
+                logger.info("设备同步完成。")
                 
-                logger.info("✅ 所有数据同步完成")
+                session.commit()  # <--- 添加 commit 操作
+                logger.info("✅ 所有数据同步完成并已提交到数据库。")
                 
-        except Exception as e:
-            logger.error(f"❌ 数据同步失败: {e}")
-            raise
+            except Exception as e:
+                logger.error(f"❌ 数据同步事务失败: {e}")
+                logger.info("正在回滚事务...")
+                session.rollback()  # <--- 添加 rollback 操作
+                logger.info("事务已回滚。")
+                raise # 重新抛出异常，以便上层 main 函数可以捕获并记录
     
     def get_stats(self):
         """获取数据库统计信息"""
