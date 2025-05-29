@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+
+# Docker specific files - these are used to build/orchestrate, not needed inside the image
+Dockerfile
+docker-compose.yml
+deploy.sh
+.dockerignore # The .dockerignore file itself
+
+# Python virtual environment
+.venv
+venv/
+env/
+ENV/
+
+# Python cache and compiled files
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Log files and directories
+log/
+*.log
+
+# Instance folder - often used for local DBs or configs not for the image
+instance/
+
+# Database files (if any local ones are used, e.g. sqlite)
+*.sqlite3
+*.db
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.project
+.classpath
+.settings/
+*.swp
+*.swo
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage

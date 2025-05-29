@@ -1,20 +1,21 @@
-from model.session import SessionLocal, engine
-from model.models import Group, Devices, User, UserNotifyConfig
-import yaml
+from model.session import engine # Only engine is needed for create_tables
 from model import create_tables
-from sqlalchemy import MetaData, Table, inspect
+from sqlalchemy import inspect # To potentially check if any tables exist, if needed for logic
 
-# 先判断是否存在数据库
-inspector = inspect(engine)
-create_table_list = {"groups", "devices", "users", "user_notify_configurations", "failure_tickets",
-                     "user_notify_frequency", "income_monitor_servers", "income_monitor_platforms"}
+# Create all tables defined in models.py (linked via Base)
+# This function handles checking for existing tables, so no need for manual checks here.
+create_tables()
 
-# 创建表如果存在就跳过
-for table_name in create_table_list:
-    if not inspector.has_table(table_name):
-        create_tables()
+print("Database tables anre checked / created if they didn't exist.")
 
-#
+# The following data population part remains commented out for now.
+# If you want to enable it, ensure the YAML file path is correct
+# and consider if it should run every time or only on a truly empty DB.
+
+# import yaml
+# from model.session import SessionLocal
+# from model.models import Group, Devices, User, UserNotifyConfig # Import all necessary models
+
 # with open("datasource/source.yaml", "r") as file:
 #     data = yaml.safe_load(file)
 #
@@ -64,3 +65,4 @@ for table_name in create_table_list:
 # # 4. Commit the changes
 # session.commit()
 # session.close()
+# print("Initial data populated (if uncommented and source.yaml exists).")

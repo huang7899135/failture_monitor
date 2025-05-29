@@ -1,3 +1,4 @@
+import os
 from datetime import time
 import netifaces as ni
 
@@ -15,7 +16,7 @@ DATABASE_CONFIG = {
     'dialect': 'mysql+pymysql',
     'user': 'root',
     'password': 'xs123456',
-    'host': '127.0.0.1',
+    'host': os.getenv('DATABASE_HOST', '127.0.0.1'),
     'port': '3306',
     'database': 'failure_monitor'
 }

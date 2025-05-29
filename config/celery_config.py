@@ -1,11 +1,13 @@
+import os
 from celery.schedules import crontab
 from config.setting import DEVICE_ONLINE_MONITOR_INTERVAL
 
 
 """celery配置文件"""
 timezone = 'Asia/Shanghai'
-broker_url = 'redis://localhost:6379/0'
-result_backend = 'redis://localhost:6379/1'
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+broker_url = f'redis://{redis_host}:6379/0'
+result_backend = f'redis://{redis_host}:6379/1'
 beat_schedule = {
     'device_online_monitor': {
         'task': 'tasks.monitor_tasks.device_online_monitor',
