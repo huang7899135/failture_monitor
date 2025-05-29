@@ -4,7 +4,14 @@ from config.setting import DATABASE_URL
 from contextlib import contextmanager
 
 
-engine = create_engine(DATABASE_URL, pool_size=10, max_overflow=20, pool_recycle=3600, pool_pre_ping=True)
+engine = create_engine(
+    DATABASE_URL, 
+    pool_size=10, 
+    max_overflow=20, 
+    pool_recycle=3600, 
+    pool_pre_ping=True,
+    connect_args={"charset": "utf8mb4"}
+)
 
 
 SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=True, bind=engine))

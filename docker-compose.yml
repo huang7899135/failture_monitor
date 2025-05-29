@@ -27,6 +27,7 @@ services:
       MYSQL_DATABASE: failure_monitor
       # MYSQL_USER: root # Already default user with MYSQL_ROOT_PASSWORD
       # MYSQL_PASSWORD: xs123456 # Covered by MYSQL_ROOT_PASSWORD
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     # 移除端口暴露，只在Docker内部网络中访问
     volumes:
       - mysql_data:/var/lib/mysql
@@ -51,7 +52,6 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - internal_network
       - internal_network
 
   celery:
