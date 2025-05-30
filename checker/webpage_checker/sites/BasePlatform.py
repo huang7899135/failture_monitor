@@ -2,6 +2,7 @@ import calendar
 import os
 import pickle
 from datetime import datetime
+from typing import cast
 
 import requests
 import json
@@ -21,7 +22,7 @@ class Platform(ABC):
         # 动态获取session_file_path,当前路径的上一级目录的sessions目录
         self.session_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                               f"sessions/{self.platform_name}")
-        self.session = None
+        self.session: requests.Session | None = None
         self.login_info = self.__load_config()["login_info"][self.platform_name]
         self.username = self.login_info["username"]
         self.password = self.login_info["password"]
@@ -59,6 +60,7 @@ class Platform(ABC):
             self._login()
         for _ in range(3):
             try:
+                self.session = cast(requests.Session, self.session)
                 resp = self.session.post(*args, **kwargs, verify=False)
             except requests.exceptions.ConnectionError:
                 pass

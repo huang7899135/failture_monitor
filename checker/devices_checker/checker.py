@@ -1,4 +1,3 @@
-import logging
 import os
 import socket
 import subprocess
@@ -30,9 +29,9 @@ class AsyncDeviceOnlineChecker:
             return False
 
     async def __check_via_tcp(self):
-        reader, writer = None, None
+        writer = None
         try:
-            reader, writer = await asyncio.open_connection(self.address, int(self.port))
+            _, writer = await asyncio.open_connection(self.address, int(self.port))
             writer.close()
             return True
         except (TimeoutError, ConnectionRefusedError, OSError):
@@ -44,7 +43,8 @@ class AsyncDeviceOnlineChecker:
     async def __check_via_http(self):
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.get(f"http://{self.address}:{self.port}", timeout=3) as response:
+                timeout = aiohttp.ClientTimeout(total=3)
+                async with session.get(f"http://{self.address}:{self.port}", timeout=timeout) as response:
                     if 200 <= response.status < 600:
                         return True
                     return False
@@ -149,7 +149,7 @@ async def async_checker(target_list: list) -> tuple:
     tasks = []
     for target_obj in target_list:
         tasks.append(AsyncDeviceOnlineChecker(target_obj))
-    return await asyncio.gather(*[task.check() for task in tasks])
+    return tuple(await asyncio.gather(*[task.check() for task in tasks]))
 
 
 def perform_async_check_devices(target_list: list) -> tuple:

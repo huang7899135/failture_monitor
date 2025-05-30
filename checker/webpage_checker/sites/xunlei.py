@@ -1,3 +1,5 @@
+from typing import cast
+from requests import Session
 from .BasePlatform import Platform
 from celery.utils.log import get_task_logger
 
@@ -18,6 +20,7 @@ class XunLei(Platform):
             "username": self.username,
             "password": self.password
         }
+        self.session = cast(Session, self.session)
         resp = self.session.post(url=url, json=data)
         if resp.json()['code'] == 0:
             token = resp.json()['data']['token']
@@ -34,6 +37,7 @@ class XunLei(Platform):
 
     def _logout(self):
         url = 'https://console.snodehome.cn/api/auth/logout'
+        self.session = cast(Session, self.session)
         self.session.get(url=url)
 
     def query_server_status(self):
@@ -69,6 +73,7 @@ class XunLei(Platform):
 
     def query_device_pppoe_status(self, device_id):
         """获取设备pppoe状态,默认情况是多播线路,即mutidial下面的账号"""
+        self.session = cast(Session, self.session)
         self.session.headers['referer'] = self.generate_web_url(device_id)
         url = f"http://{device_id}.localweb.snodehome.cn/api/pppoeStatus"
         resp = self.session.get(url=url)
@@ -115,6 +120,7 @@ class XunLei(Platform):
 
     def query_online_device_fault_account(self):
         """查询在线设备的账号状态"""
+        self.session = cast(Session, self.session)
         fault_server = []
         ret = self.query_server_status()
         online_server = ret['online']
@@ -127,7 +133,7 @@ class XunLei(Platform):
                 fault_server.append({
                     "device_id": device_id,
                     "fault_account": ret['disconnected'],
-                    "url": self.session.headers['referer'] + "#/pppoe/state"
+                    "url": str(self.session.headers['referer']) + "#/pppoe/state"
                 })
 
 
