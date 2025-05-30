@@ -6,8 +6,6 @@ services:
     volumes:
       - ./datasource:/app/datasource:ro
       - app_logs:/app/log
-      - /etc/localtime:/etc/localtime:ro  # 同步宿主机时区
-      - /etc/timezone:/etc/timezone:ro    # 同步宿主机时区文件
     environment:
       - DATABASE_HOST=db
       - REDIS_HOST=redis
@@ -72,8 +70,6 @@ services:
       - ./datasource:/app/datasource:ro  # 只读挂载配置文件
       - app_logs:/app/log  # 日志持久化
       - celery_data:/app/celery  # Celery Beat 调度文件
-      - /etc/localtime:/etc/localtime:ro  # 同步宿主机时区
-      - /etc/timezone:/etc/timezone:ro    # 同步宿主机时区文件
     environment:
       - DATABASE_HOST=db
       - REDIS_HOST=redis
