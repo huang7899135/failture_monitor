@@ -1,6 +1,7 @@
 from datetime import datetime
 import pytz
 from flask import Flask, render_template, request, jsonify
+from sqlalchemy import text
 from model.models import FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
@@ -150,7 +151,7 @@ def health_check():
     try:
         # 检查数据库连接
         sql_session = SessionLocal()
-        sql_session.execute('SELECT 1')
+        sql_session.execute(text('SELECT 1'))
         sql_session.close()
 
         return jsonify({
