@@ -10,9 +10,10 @@ from abc import ABC, abstractmethod
 from urllib3.exceptions import InsecureRequestWarning
 from celery.utils.log import get_task_logger
 from model.session import SessionLocal
+import urllib3
 
 logger = get_task_logger(__name__)
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+urllib3.disable_warnings(InsecureRequestWarning)
 
 
 class Platform(ABC):
@@ -73,6 +74,7 @@ class Platform(ABC):
             self._login()
             for _ in range(3):
                 try:
+                    self.session = cast(requests.Session, self.session)
                     resp = self.session.post(*args, **kwargs, verify=False)
                 except requests.exceptions.ConnectionError:
                     pass
@@ -85,6 +87,7 @@ class Platform(ABC):
         if not self.session:
             logger.info("加载本地session失败,从新登录")
             self._login()
+        self.session = cast(requests.Session, self.session)
         resp = self.session.get(*args, **kwargs, verify=False)
         logger.debug(f"fetch status_code:{resp.status_code}")
         if self.session_is_unexpected(resp):
