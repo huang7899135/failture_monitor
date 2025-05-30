@@ -100,6 +100,18 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+  phpmyadmin:
+    image: dockerpull.cn/phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD:-xs123456}
+    depends_on:
+      - db
+    networks:
+      - internal_network
 
   # Nginx 反向代理（可选）
   nginx:
