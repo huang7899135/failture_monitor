@@ -1,104 +1,274 @@
 #!/bin/bash
+# 生产环境部署脚本
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
+set -e  # 遇到错误立即退出
 
-# Output commands being executed
-# set -x
+# 颜色定义
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-echo "==================================================="
-echo "         故障监控系统部署脚本"
-echo "==================================================="
+# 日志函数
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
 
-# 检查Docker和Docker Compose是否安装
-echo "检查 Docker 和 Docker Compose..."
-if ! command -v docker &> /dev/null; then
-    echo "错误: Docker 未安装，请先安装 Docker"
-    exit 1
-fi
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
 
-if ! command -v docker compose &> /dev/null; then
-    echo "错误: Docker Compose 未安装，请先安装 Docker Compose"
-    exit 1
-fi
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
 
-echo "✓ Docker 和 Docker Compose 已安装"
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
 
-# 停止并清理已存在的容器（如果有）
-echo "清理已存在的容器..."
-docker compose down -v 2>/dev/null || true
-
-echo "构建并启动所有服务 (app, db, redis, celery)..."
-docker compose up -d --build
-
-echo "等待数据库服务初始化..."
-echo "正在检查数据库健康状态..."
-
-# 使用健康检查等待数据库就绪
-max_attempts=60  # 增加到60次，每次等待2秒，总共2分钟
-attempt_num=1
-echo "等待数据库健康检查通过..."
-until [ "$(docker compose ps -q db | xargs docker inspect -f '{{.State.Health.Status}}')" == "healthy" ]; do
-    if [ "$attempt_num" -eq "$max_attempts" ]; then
-        echo "❌ 数据库健康检查失败，尝试次数已达 $max_attempts 次"
-        echo "查看数据库日志："
-        docker compose logs db
-        echo "查看数据库容器状态："
-        docker compose ps db
+# 检查Docker和Docker Compose
+check_dependencies() {
+    log_info "检查依赖..."
+    
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker 未安装或不在PATH中"
         exit 1
     fi
-    health_status=$(docker compose ps -q db | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
-    echo "数据库健康状态: $health_status (尝试 $attempt_num/$max_attempts)..."
-    sleep 2
-    attempt_num=$((attempt_num+1))
-done
-
-echo "✓ 数据库服务已就绪"
-
-# 等待Redis服务就绪
-echo "等待 Redis 服务初始化..."
-max_attempts=30
-attempt_num=1
-until [ "$(docker compose ps -q redis | xargs docker inspect -f '{{.State.Health.Status}}')" == "healthy" ]; do
-    if [ "$attempt_num" -eq "$max_attempts" ]; then
-        echo "❌ Redis 健康检查失败，尝试次数已达 $max_attempts 次"
-        echo "查看Redis日志："
-        docker compose logs redis
-        echo "查看Redis容器状态："
-        docker compose ps redis
+    
+    if ! docker compose version &> /dev/null; then
+        log_error "Docker Compose 未安装或不在PATH中"
         exit 1
     fi
-    health_status=$(docker compose ps -q redis | xargs docker inspect -f '{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
-    echo "Redis健康状态: $health_status (尝试 $attempt_num/$max_attempts)..."
-    sleep 2
-    attempt_num=$((attempt_num+1))
-done
+    
+    log_success "依赖检查完成"
+}
 
-echo "✓ Redis 服务已就绪"
+# 检查环境变量文件
+check_env_file() {
+    log_info "检查环境变量文件..."
+    
+    if [ ! -f ".env" ]; then
+        log_warning ".env 文件不存在，从模板创建..."
+        cp .env.example .env
+        log_warning "请编辑 .env 文件设置正确的配置值"
+        read -p "是否现在编辑 .env 文件? (y/n): " edit_env
+        if [ "$edit_env" = "y" ]; then
+            ${EDITOR:-nano} .env
+        fi
+    fi
+    
+    log_success "环境变量文件检查完成"
+}
 
-echo "正在初始化数据库模式..."
-if docker compose exec app python init_db.py; then
-    echo "✓ 数据库初始化完成"
-else
-    echo "❌ 数据库初始化失败"
-    echo "查看应用日志："
-    docker compose logs app
-    exit 1
-fi
+# 构建镜像
+build_images() {
+    log_info "构建Docker镜像..."
+    docker compose -f docker-compose.prod.yml build --no-cache
+    log_success "镜像构建完成"
+}
 
-echo ""
-echo "==================================================="
-echo "              部署完成！"
-echo "==================================================="
-echo "📱 Web应用访问地址: http://localhost:8090"
-echo "🗄️  MySQL数据库: 仅在Docker内部网络可访问 (service: db:3306)"
-echo "🔴 Redis缓存: 仅在Docker内部网络可访问 (service: redis:6379)"
-echo "⚙️  Celery任务调度器: 正在 'celery' 服务中运行"
-echo ""
-echo "常用命令："
-echo "  查看所有服务状态: docker compose ps"
-echo "  查看实时日志: docker compose logs -f"
-echo "  查看特定服务日志: docker compose logs -f [service_name]"
-echo "  停止所有服务: docker compose down"
-echo "  完全清理: docker compose down -v"
-echo "==================================================="
+# 初始化数据库
+init_database() {
+    log_info "初始化数据库..."
+    
+    # 启动数据库服务
+    docker compose -f docker-compose.prod.yml up -d db redis
+    
+    # 等待数据库准备就绪
+    log_info "等待数据库启动..."
+    sleep 30
+    
+    # 运行数据库初始化
+    docker compose -f docker-compose.prod.yml run --rm app python init_db.py --action=sync
+    
+    log_success "数据库初始化完成"
+}
+
+# 启动服务
+start_services() {
+    log_info "启动所有服务..."
+    
+    case "$1" in
+        "with-nginx")
+            docker compose -f docker-compose.prod.yml --profile nginx up -d
+            ;;
+        *)
+            docker compose -f docker-compose.prod.yml up -d
+            ;;
+    esac
+    
+    log_success "服务启动完成"
+}
+
+# 检查服务状态
+check_services() {
+    log_info "检查服务状态..."
+    
+    docker compose -f docker-compose.prod.yml ps
+    
+    # 检查应用健康状态
+    log_info "等待应用启动..."
+    sleep 10
+    
+    if curl -f http://localhost:8090/health > /dev/null 2>&1; then
+        log_success "应用健康检查通过"
+    else
+        log_warning "应用健康检查失败，请检查日志"
+    fi
+}
+
+# 查看日志
+view_logs() {
+    log_info "查看服务日志..."
+    docker compose -f docker-compose.prod.yml logs -f
+}
+
+# 停止服务
+stop_services() {
+    log_info "停止所有服务..."
+    docker compose -f docker-compose.prod.yml down
+    log_success "服务已停止"
+}
+
+# 重启服务
+restart_services() {
+    log_info "重启服务..."
+    docker compose -f docker-compose.prod.yml restart
+    log_success "服务重启完成"
+}
+
+# 备份数据库
+backup_database() {
+    log_info "备份数据库..."
+    
+    timestamp=$(date +"%Y%m%d_%H%M%S")
+    backup_file="backup_${timestamp}.sql"
+    
+    docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p${MYSQL_ROOT_PASSWORD:-xs123456} failure_monitor > "$backup_file"
+    
+    log_success "数据库备份完成: $backup_file"
+}
+
+# 清理资源
+cleanup() {
+    log_info "清理Docker资源..."
+    
+    # 停止并删除容器
+    docker compose -f docker-compose.prod.yml down
+    
+    # 删除未使用的镜像
+    docker image prune -f
+    
+    # 删除未使用的卷（谨慎使用）
+    read -p "是否删除未使用的Docker卷? 这将删除所有数据! (y/n): " confirm
+    if [ "$confirm" = "y" ]; then
+        docker volume prune -f
+        log_warning "所有未使用的卷已删除"
+    fi
+    
+    log_success "清理完成"
+}
+
+# 更新应用
+update_app() {
+    log_info "更新应用..."
+    
+    # 拉取最新代码
+    git pull
+    
+    # 重新构建镜像
+    build_images
+    
+    # 重启服务
+    restart_services
+    
+    log_success "应用更新完成"
+}
+
+# 显示帮助信息
+show_help() {
+    echo "生产环境部署脚本"
+    echo ""
+    echo "使用方法: $0 [命令] [选项]"
+    echo ""
+    echo "命令:"
+    echo "  deploy          完整部署（构建、初始化、启动）"
+    echo "  deploy-nginx    完整部署（包含Nginx）"
+    echo "  start           启动服务"
+    echo "  start-nginx     启动服务（包含Nginx）"
+    echo "  stop            停止服务"
+    echo "  restart         重启服务"
+    echo "  build           构建镜像"
+    echo "  init-db         初始化数据库"
+    echo "  status          查看服务状态"
+    echo "  logs            查看日志"
+    echo "  backup          备份数据库"
+    echo "  update          更新应用"
+    echo "  cleanup         清理Docker资源"
+    echo "  help            显示帮助信息"
+    echo ""
+}
+
+# 主函数
+main() {
+    case "$1" in
+        "deploy")
+            check_dependencies
+            check_env_file
+            build_images
+            init_database
+            start_services
+            check_services
+            log_success "部署完成！应用已在 http://localhost:8090 运行"
+            ;;
+        "deploy-nginx")
+            check_dependencies
+            check_env_file
+            build_images
+            init_database
+            start_services "with-nginx"
+            check_services
+            log_success "部署完成！应用已在 http://localhost 运行（通过Nginx代理）"
+            ;;
+        "start")
+            start_services
+            ;;
+        "start-nginx")
+            start_services "with-nginx"
+            ;;
+        "stop")
+            stop_services
+            ;;
+        "restart")
+            restart_services
+            ;;
+        "build")
+            build_images
+            ;;
+        "init-db")
+            init_database
+            ;;
+        "status")
+            check_services
+            ;;
+        "logs")
+            view_logs
+            ;;
+        "backup")
+            backup_database
+            ;;
+        "update")
+            update_app
+            ;;
+        "cleanup")
+            cleanup
+            ;;
+        "help"|*)
+            show_help
+            ;;
+    esac
+}
+
+# 执行主函数
+main "$@"
