@@ -131,11 +131,15 @@ class WeChatTemplateMessage(Notifier):
                     return None
                 url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + token
                 continue
+            elif res['errcode'] == 43101:
+                # 用户拒绝接收该公众号的消息
+                logger.error(f"用户拒绝接收消息 - 用户ID: {to_user}, errcode: {res['errcode']}, message: {res['errmsg']}")
+                return None
             else:
                 # 其他错误不重试，直接失败
-                logger.error(f"模板消息发送失败 errcode: {res['errcode']},message:{res['errmsg']}")
+                logger.error(f"模板消息发送失败 - 用户ID: {to_user}, errcode: {res['errcode']}, message: {res['errmsg']}")
                 return None
-        logger.critical("超过做大重试次数,模板消息发送失败")
+        logger.critical(f"超过最大重试次数,模板消息发送失败 - 用户ID: {to_user}")
 
     def send_network_recovery_notification(self, to_user, render_url, fault_point, fault_time, recovery_time, remark):
         """发送网络恢复通知"""
