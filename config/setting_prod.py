@@ -24,4 +24,4 @@ DATABASE_URL = f"{DATABASE_CONFIG['dialect']}://{DATABASE_CONFIG['user']}:{DATAB
 
 ###############render_url################
 
-NETLOC = 'monitor.visionblue.cloud:8090'
+NETLOC = 'tunnel.gycloud.net:8090'
