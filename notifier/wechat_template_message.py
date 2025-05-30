@@ -95,7 +95,11 @@ class WeChatTemplateMessage(Notifier):
         89507	1小时内该IP被管理员拒绝调用一次，1小时内不可再使用该IP调用
         """
 
-        url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + self.get_token()
+        token = self.get_token()
+        if not token:
+            logger.error("无法获取有效的access_token，终止发送模板消息")
+            return None
+        url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + token
         data = {
             "touser": to_user,
             "template_id": template_id,
@@ -112,11 +116,25 @@ class WeChatTemplateMessage(Notifier):
                 logger.warning("模板消息发送失败,系统繁忙,稍后重试")
                 time.sleep(10)
                 continue
-            else:
-                logger.warning(f"errcode: {res['errcode']},message:{res['errmsg']},从新获取token")
+            elif res['errcode'] in [40001, 40002, 42001, 42007, 41001]:
+                # Token相关错误码：
+                # 40001: AppSecret错误或者AppSecret不属于这个公众号
+                # 40002: 请确保grant_type字段值为client_credential
+                # 42001: access_token超时，请检查access_token的有效期
+                # 42007: 用户修改微信密码，accesstoken和refreshtoken失效
+                # 41001: 缺少access_token参数
+                logger.warning(f"Token相关错误 errcode: {res['errcode']},message:{res['errmsg']},重新获取token")
                 self.get_new_token()
-                url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + self.get_token()
+                token = self.get_token()
+                if not token:
+                    logger.error("无法获取有效的access_token，终止发送模板消息")
+                    return None
+                url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + token
                 continue
+            else:
+                # 其他错误不重试，直接失败
+                logger.error(f"模板消息发送失败 errcode: {res['errcode']},message:{res['errmsg']}")
+                return None
         logger.critical("超过做大重试次数,模板消息发送失败")
 
     def send_network_recovery_notification(self, to_user, render_url, fault_point, fault_time, recovery_time, remark):

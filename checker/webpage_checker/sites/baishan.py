@@ -191,8 +191,7 @@ class Baishan(Platform):
             if item['planning_type'] == "static":
                 result['accounts_id_for_stress_test'].append(item['id'])
             else:
-                if (item['dial_status'] == 1 and item['account_ip'] and item['ipv6'] and item['pressure_test_status'] in
-                        [0, 3]):
+                if (item['dial_status'] == 1 and item['account_ip'] and item['pressure_test_status'] in [0, 3]):
                     result['accounts_id_for_stress_test'].append(item['id'])
                 elif item['dial_status'] in [2, 3] or (item['dial_status'] == 1 and not item['account_ip']):
                     result['accounts_id_for_dialing'].append(item['id'])
@@ -232,6 +231,32 @@ class Baishan(Platform):
         if not account_list:
             logger.info(f"白山<{self.login_supplier}>:没有可以执行压测的账号")
             return {}
+        
+        # 如果是IPv6压测，需要先过滤掉不支持IPv6的账户
+        if ip_type == "ipv6":
+            # 获取当前故障账户的详细信息
+            current_fault_accounts = self.query_faulty_accounts()['account_fault_list']
+            # 创建id到账户详情的映射
+            account_detail_map = {item['id']: item for item in current_fault_accounts}
+            # 过滤掉没有IPv6地址或IPv6压测状态不可用的账户
+            filtered_account_list = []
+            for account_id in account_list:
+                if account_id in account_detail_map:
+                    account_detail = account_detail_map[account_id]
+                    # 检查账户是否有IPv6地址且IPv6压测状态可用
+                    if (account_detail.get('ipv6') and 
+                        account_detail.get('ipv6_pressure_test_status') in [0, 3]):
+                        filtered_account_list.append(account_id)
+                    else:
+                        logger.warning(f"白山<{self.login_supplier}>:账号{account_id}无IPv6地址或IPv6压测状态不可用，跳过IPv6压测")
+                else:
+                    logger.warning(f"白山<{self.login_supplier}>:账号{account_id}未找到详细信息，跳过IPv6压测")
+            
+            account_list = filtered_account_list
+            if not account_list:
+                logger.warning(f"白山<{self.login_supplier}>:过滤后没有可以执行IPv6压测的账号")
+                return {}
+        
         query_data = {
             "query": "mutation _ ($ids: [Int] !, $pressure_type: Int) {\n        accountPressureTest(ids: $ids, "
                      "pressure_type:$pressure_type) {\n            result\n        }\n    }\n",
@@ -240,10 +265,10 @@ class Baishan(Platform):
                 "pressure_type": 0 if ip_type == "ipv4" else 1
             }
         }
-        logger.info(f"白山<{self.login_supplier}>:执行压测共计账号{len(account_list)}个")
+        logger.info(f"白山<{self.login_supplier}>:执行{ip_type}压测共计账号{len(account_list)}个")
         resp = self._fetch(url=self.query_url, json=query_data)
         if resp.json()['code'] == 0:
-            logger.info(f"白山<{self.login_supplier}>:宽带测速提交成功")
+            logger.info(f"白山<{self.login_supplier}>:{ip_type}宽带测速提交成功")
             return resp.json()
         else:
             raise Exception(resp.json()['msg'])
@@ -728,13 +753,20 @@ class Baishan(Platform):
         if not dialing_accounts:
             logger.info(f"白山<{self.login_supplier}>:拨号完成,开始ipv4压测")
 
+        # IPv4压测
         self.perform_accounts_stress_test_in_account_failure(
             fault_account_for_processing['accounts_id_for_stress_test'])
 
         time.sleep(10 * 60)
 
-        self.perform_accounts_stress_test_in_account_failure(
-            fault_account_for_processing['accounts_id_for_stress_test'], ip_type="ipv6")
+        # IPv6压测 - 获取最新的故障账户信息并执行IPv6压测
+        try:
+            self.perform_accounts_stress_test_in_account_failure(
+                fault_account_for_processing['accounts_id_for_stress_test'], ip_type="ipv6")
+        except Exception as e:
+            logger.error(f"白山<{self.login_supplier}>:IPv6压测执行失败: {str(e)}")
+            # 继续执行，不中断整个流程
+        
         time.sleep(10 * 60)
 
         # fault_account_for_processing = self._query_and_category_fault_accounts()
