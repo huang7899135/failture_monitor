@@ -97,7 +97,7 @@ class DatabaseInitializer:
                 existing_user.groups.clear()
                 for group_name in user_groups:
                     if group_name in group_name_to_id:
-                        group = session.query(Group).get(group_name_to_id[group_name])
+                        group = session.get(Group, group_name_to_id[group_name])
                         existing_user.groups.append(group)
                 
                 user_name_to_id[user_name] = existing_user.id
@@ -111,7 +111,7 @@ class DatabaseInitializer:
                 # 添加用户组关联
                 for group_name in user_groups:
                     if group_name in group_name_to_id:
-                        group = session.query(Group).get(group_name_to_id[group_name])
+                        group = session.get(Group, group_name_to_id[group_name])
                         new_user.groups.append(group)
                 
                 user_name_to_id[user_name] = new_user.id
