@@ -90,8 +90,11 @@ services:
         id appuser || (echo 'User appuser not found, creating...' && addgroup -S appuser && adduser -S -G appuser appuser) && \
         chown -R appuser:appuser /app/celery && \
         chmod -R u+rwx /app/celery && \
+        mkdir -p /app/notifier/token && \
+        chown -R appuser:appuser /app/celery /app/notifier/token && \
+        chmod -R u+rwx /app/celery /app/notifier/token && \
         echo 'Permissions fixed. Starting Celery as appuser...' && \
-        exec runuser -u appuser -- celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=celerybeat-schedule
+        exec runuser -u appuser -- celery -A tasks.monitor_tasks.app worker -l warning -B --concurrency=2 --max-tasks-per-child=1000 --schedule=/app/celery/celerybeat-schedule
       "
     restart: unless-stopped
     networks:
