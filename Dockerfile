@@ -44,4 +44,5 @@ ENV PYTHONPATH=/app
 # USER appuser
 
 # Run gunicorn when the container launches
-CMD ["gunicorn", "--bind", "0.0.0.0:8090", "--workers", "4", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "50", "web_app:app"]
+# 配置 gunicorn 将日志输出到 stdout/stderr，这样可以通过 docker logs 查看
+CMD ["gunicorn", "--bind", "0.0.0.0:8090", "--workers", "4", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "50", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "info", "--capture-output", "web_app:app"]

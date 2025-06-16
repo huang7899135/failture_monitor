@@ -6,13 +6,20 @@ from model.models import FailureTicket, User, UserNotifyFrequency
 from model.session import SessionLocal
 from config.message_template import DEVICE_FAULT_MESSAGE_TEMPLATE
 from utils.logger import setup_logger
+import logging
+import sys
 
+# 设置日志
 logger = setup_logger()
-# from celery.utils.log import get_task_logger
 
-# logger = get_task_logger(__name__)
-# logger = logging.getLogger(__name__)
+# 为了确保所有错误都能被捕获，设置 Flask 的日志处理器
+logging.basicConfig(level=logging.INFO)
+
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
+
+# 配置 Flask 应用的日志
+app.logger.setLevel(logging.INFO)
+app.logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 @app.route('/device_failure', methods=['GET'])
@@ -178,6 +185,17 @@ def not_found(error):
 def internal_error(error):
     """500错误处理"""
     logger.error(f"内部服务器错误: {error}")
+    return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """全局异常处理器，确保所有错误都被记录"""
+    logger.exception(f"未处理的异常: {e}")
+    # 将错误信息也打印到 stdout，确保 docker logs 能看到
+    print(f"ERROR: {e}", file=sys.stderr)
+    import traceback
+    traceback.print_exc()
     return jsonify({'error': 'Internal server error'}), 500
 
 

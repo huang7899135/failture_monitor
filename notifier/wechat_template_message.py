@@ -222,9 +222,10 @@ class WeChatTemplateMessage(Notifier):
 
     def send_fault_notify(self, message: dict):
         """发送故障通知"""
-        to_user = message.get("recipient").get(self.name.lower())
-        message['recipient_name'] = message.get("recipient").get("name")
-        message['recipient_gender'] = "先生" if message.get("recipient").get("gender") == "male" else "女士"
+        recipient = message.get("recipient")
+        to_user = recipient.get(self.name.lower()) if recipient else None
+        message['recipient_name'] = recipient.get("name") if recipient else ""
+        message['recipient_gender'] = "先生" if recipient and recipient.get("gender") == "male" else "女士"
         render_url = message.get('render_url', "www.baidu.com")  # 模版消息生效字段
         fault_time = message.get('fault_time')  # 模版消息生效字段
         fault_location = message.get('location', "请检查配置文件中的location字段")  # 模版消息生效字段
@@ -233,9 +234,10 @@ class WeChatTemplateMessage(Notifier):
 
     def send_recovery_notify(self, message: dict):
         """发送恢复通知"""
-        to_user = message.get("recipient").get(self.name.lower())
-        message['recipient_name'] = message.get("recipient").get("name")
-        message['recipient_gender'] = "先生" if message.get("recipient").get("gender") == "male" else "女士"
+        recipient = message.get("recipient")
+        to_user = recipient.get(self.name.lower()) if recipient else None
+        message['recipient_name'] = recipient.get("name") if recipient else ""
+        message['recipient_gender'] = "先生" if recipient and recipient.get("gender") == "male" else "女士"
         render_url = message.get('render_url', "www.baidu.com")  # 模版消息生效字段
         fault_time = message.get('fault_time')  # 模版消息生效字段
         recovery_time = message.get('recovery_time')  # 模版消息生效字段

@@ -29,9 +29,17 @@ def setup_logger():
         file_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
         logger.addHandler(file_handler)
-    # 在生产环境中，使用日志文件
+    # 在生产环境中，同时使用控制台输出和日志文件
     else:
         formatter = logging.Formatter('%(asctime)s %(lineno)4d [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+        
+        # 添加控制台输出，这样 docker logs 可以看到日志
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+        
+        # 同时保留文件日志
         log_filename = datetime.now().strftime("%Y-%m-%d.log")
         log_filepath = os.path.join(log_dir, log_filename)
         file_handler = TimedRotatingFileHandler(log_filepath, when="midnight")
